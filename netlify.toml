@@ -1,0 +1,24 @@
+[build]
+  publish = "public"
+  # No build command needed — scramjet/epoxy/baremux files are pre-built in public/
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Service-Worker-Allowed = "/"
+    Content-Type = "application/javascript"
+
+[[headers]]
+  for = "/scram/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/epoxy/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/baremux/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
