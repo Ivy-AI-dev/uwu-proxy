@@ -59,13 +59,31 @@ let proxyReady = false;
 async function initProxy() {
   if (!("serviceWorker" in navigator)) { setProxyStatus("error", "unsupported"); return; }
   try {
-    await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+    const reg = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
 
+    // Wait for SW to reach activated or redundant (failed)
+    const sw = reg.installing || reg.waiting || reg.active;
+    if (sw && sw.state !== "activated") {
+      await new Promise((resolve, reject) => {
+        sw.addEventListener("statechange", function h() {
+          if (this.state === "activated") { this.removeEventListener("statechange", h); resolve(); }
+          if (this.state === "redundant")  { this.removeEventListener("statechange", h); reject(new Error("SW install failed")); }
+        });
+        setTimeout(resolve, 5000); // fallback
+      });
+    }
+
+    // Wait for page to be controlled
     if (!navigator.serviceWorker.controller) {
       await Promise.race([
         new Promise(resolve => navigator.serviceWorker.addEventListener("controllerchange", resolve, { once: true })),
-        new Promise(resolve => setTimeout(resolve, 4000)),
+        new Promise(resolve => setTimeout(resolve, 3000)),
       ]);
+    }
+
+    const swState = reg.active?.state || "unknown";
+    if (swState !== "activated") {
+      toast("SW state: " + swState + " — proxy may not work", "error");
     }
 
     proxyReady = true;
@@ -73,7 +91,8 @@ async function initProxy() {
     document.getElementById("search-btn")?.removeAttribute("disabled");
   } catch (err) {
     console.error("proxy init failed:", err);
-    setProxyStatus("error", "proxy error");
+    setProxyStatus("error", err.message || "proxy error");
+    toast(err.message || "proxy failed to load", "error");
   }
 }
 
@@ -94,8 +113,13 @@ function navigate(rawUrl) {
     url = `https://www.google.com/search?q=${encodeURIComponent(rawUrl)}`;
   }
   if (!proxyReady) { toast("proxy still loading.", "error"); return; }
+  if (!window.__uv$config) { toast("UV config missing — reload page", "error"); return; }
   addRecent(url);
-  window.location.href = __uv$config.prefix + __uv$config.encodeUrl(url);
+  try {
+    window.location.href = __uv$config.prefix + __uv$config.encodeUrl(url);
+  } catch (e) {
+    toast("nav error: " + e.message, "error");
+  }
 }
 
 function handleSearch(raw) {
