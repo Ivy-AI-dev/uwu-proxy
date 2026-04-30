@@ -1,7 +1,14 @@
 [build]
   publish = "public"
 
-# Catch /service/* before Netlify 404s — SW intercepts first, this is the fallback
+# Route bare server requests to our Netlify Function
+[[redirects]]
+  from = "/bare/*"
+  to = "/.netlify/functions/bare"
+  status = 200
+  force = true
+
+# Catch /service/* — SW intercepts first, this is the fallback
 [[redirects]]
   from = "/service/*"
   to = "/index.html"
