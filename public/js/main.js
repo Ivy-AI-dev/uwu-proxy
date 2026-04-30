@@ -1,4 +1,4 @@
-/* uwu proxy — main.js (Scramjet + Epoxy) */
+/* uwu proxy — main.js */
 
 /* globals loaded via <script> tags: Ultraviolet, __uv$config */
 const VERSION = "1.0.0";
@@ -93,7 +93,7 @@ function navigate(rawUrl) {
   try { new URL(url); } catch {
     url = `https://www.google.com/search?q=${encodeURIComponent(rawUrl)}`;
   }
-  if (!proxyReady || !controller) { toast("proxy still loading.", "error"); return; }
+  if (!proxyReady) { toast("proxy still loading.", "error"); return; }
   addRecent(url);
   window.location.href = __uv$config.prefix + __uv$config.encodeUrl(url);
 }
