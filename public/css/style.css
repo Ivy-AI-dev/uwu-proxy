@@ -4,24 +4,24 @@
    TOKENS
 ═══════════════════════════ */
 :root {
-  --bg:     #0a0a0a;
-  --bg2:    #111;
-  --bg3:    #1a1a1a;
+  --bg:     #050510;
+  --bg2:    #0c0c1e;
+  --bg3:    #13132b;
   --card:   rgba(255,255,255,0.03);
   --card-h: rgba(255,255,255,0.06);
-  --border: rgba(255,255,255,0.08);
-  --border-h: rgba(255,255,255,0.18);
+  --border: rgba(255,255,255,0.07);
+  --border-h: rgba(255,121,198,0.35);
 
-  --pink:   #ff2d55;
-  --purple: #7c3aed;
-  --mint:   #00d68f;
-  --yellow: #f5a623;
-  --cyan:   #00b4d8;
-  --red:    #ff3b30;
+  --pink:   #ff79c6;
+  --purple: #bd93f9;
+  --mint:   #50fa7b;
+  --yellow: #f1fa8c;
+  --cyan:   #8be9fd;
+  --red:    #ff5555;
 
-  --text:   #f0f0f0;
-  --dim:    #666;
-  --muted:  #333;
+  --text:   #f8f8f2;
+  --dim:    #6272a4;
+  --muted:  #3a3a5c;
 
   --r:    10px;
   --r-sm: 6px;
