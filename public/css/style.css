@@ -92,9 +92,10 @@ input { font-family: inherit; }
 
 .nav-credit {
   font-family: var(--ff-mono);
-  font-size: 0.67rem;
-  color: var(--muted);
-  letter-spacing: 0.04em;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.03em;
   margin-right: 8px;
   white-space: nowrap;
 }

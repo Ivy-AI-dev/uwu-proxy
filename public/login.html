@@ -32,6 +32,17 @@
     .success{display:none;text-align:center;padding:20px 0;}
     .success-name{font-size:1.8rem;font-weight:700;background:linear-gradient(135deg,var(--pink),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
     .success-sub{color:var(--dim);font-size:.88rem;margin-top:6px;}
+    /* Onboarding overlay */
+    .onboard{position:fixed;inset:0;z-index:999;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;animation:fadeIn .4s ease;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+    .onboard-name{font-family:'Comfortaa',sans-serif;font-size:2.8rem;font-weight:700;background:linear-gradient(135deg,var(--pink),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px;}
+    .onboard-tag{color:var(--dim);font-size:1rem;margin-bottom:48px;}
+    .onboard-features{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:100%;max-width:380px;margin-bottom:40px;}
+    .onboard-feat{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:16px 14px;text-align:left;}
+    .onboard-feat-title{font-family:'Comfortaa',sans-serif;font-size:.88rem;font-weight:700;margin-bottom:3px;}
+    .onboard-feat-sub{font-size:.73rem;color:var(--dim);}
+    .onboard-btn{padding:14px 40px;background:linear-gradient(135deg,var(--pink),var(--purple));border:none;border-radius:40px;color:#fff;font-size:.95rem;font-family:'Comfortaa',sans-serif;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(255,121,198,.3);transition:opacity .2s,transform .15s;}
+    .onboard-btn:hover{opacity:.88;transform:translateY(-2px);}
   </style>
 </head>
 <body>
@@ -63,8 +74,33 @@
 
   <div class="success" id="success-view">
     <div class="success-name" id="welcome-name"></div>
-    <div class="success-sub">welcome back ♡</div>
+    <div class="success-sub">logging you in...</div>
   </div>
+</div>
+
+<!-- Onboarding -->
+<div class="onboard" id="onboard">
+  <div class="onboard-name" id="onboard-name"></div>
+  <div class="onboard-tag">welcome to uwu proxy</div>
+  <div class="onboard-features">
+    <div class="onboard-feat">
+      <div class="onboard-feat-title">Proxy</div>
+      <div class="onboard-feat-sub">Browse any site, unblocked</div>
+    </div>
+    <div class="onboard-feat">
+      <div class="onboard-feat-title">Games</div>
+      <div class="onboard-feat-sub">30+ games built in</div>
+    </div>
+    <div class="onboard-feat">
+      <div class="onboard-feat-title">Apps</div>
+      <div class="onboard-feat-sub">YouTube, Spotify & more</div>
+    </div>
+    <div class="onboard-feat">
+      <div class="onboard-feat-title">Links</div>
+      <div class="onboard-feat-sub">10 backup URLs</div>
+    </div>
+  </div>
+  <button class="onboard-btn" id="onboard-go">let's go</button>
 </div>
 
 <script>
@@ -129,7 +165,20 @@
       nameEl.textContent = data.user;
       form.style.display = "none";
       success.style.display = "block";
-      setTimeout(() => window.location.replace("/"), 1200);
+      // Show onboarding after brief delay
+      setTimeout(() => {
+        document.querySelector(".card").style.display = "none";
+        const ob = document.getElementById("onboard");
+        document.getElementById("onboard-name").textContent = data.user;
+        ob.style.display = "flex";
+        // Skip onboarding if they've seen it before
+        const seen = localStorage.getItem("uwu_onboarded_" + data.user);
+        if (seen) { window.location.replace("/"); return; }
+        localStorage.setItem("uwu_onboarded_" + data.user, "1");
+        document.getElementById("onboard-go").addEventListener("click", () => {
+          window.location.replace("/");
+        });
+      }, 600);
     } catch {
       errEl.textContent = "connection error. try again.";
       btn.disabled = false;

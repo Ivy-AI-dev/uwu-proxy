@@ -60,7 +60,7 @@
 
   <section class="hero">
     <h1 class="hero-title">uwu proxy</h1>
-    <p class="hero-sub">browse freely.</p>
+    <p class="hero-sub" id="hero-welcome">browse freely.</p>
 
     <div class="search-wrap">
       <form class="search-bar" id="search-form" autocomplete="off">
@@ -220,6 +220,8 @@
   const _s = JSON.parse(localStorage.getItem("uwu_session") || "{}");
   const _nu = document.getElementById("nav-user");
   if (_nu && _s.user) _nu.textContent = _s.user;
+  const _hw = document.getElementById("hero-welcome");
+  if (_hw && _s.user) _hw.textContent = `welcome back, ${_s.user.toLowerCase()}.`;
   if (_s.role === "admin") {
     const al = document.createElement("a");
     al.href = "/admin.html"; al.className = "nav-link"; al.style.color = "var(--yellow)";
