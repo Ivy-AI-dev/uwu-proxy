@@ -6,6 +6,7 @@ const VERSION = "1.0.0";
 // ── Data ────────────────────────────────
 const GAMES = [
   { name: "Krunker",        url: "https://krunker.io/",              tag: "action",  category: "action",  desc: "Fast-paced browser FPS"              },
+  { name: "Retro Bowl",     url: "https://retrobowl.io/",            tag: "casual",  category: "casual",  desc: "Lead your team to the championship"  },
   { name: "Shell Shockers", url: "https://shellshock.io/",           tag: "action",  category: "action",  desc: "Egg-based FPS battle royale"         },
   { name: "1v1.LOL",        url: "https://1v1.lol/",                 tag: "action",  category: "action",  desc: "Build and battle in real-time"       },
   { name: "Cookie Clicker", url: "https://orteil.dashnet.org/cookieclicker/", tag: "casual", category: "casual", desc: "Click cookies, build an empire" },
