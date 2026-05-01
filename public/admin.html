@@ -8,7 +8,7 @@
     (function(){
       var s=localStorage.getItem("uwu_session");
       if(!s)return location.replace("/login.html");
-      try{var d=JSON.parse(s);if(!d.user||Date.now()-d.loginTime>7*24*60*60*1000||d.role!=="admin"){return location.replace("/");}}catch{location.replace("/login.html");}
+      try{var d=JSON.parse(s);if(!d.user||Date.now()-d.loginTime>7*24*60*60*1000||d.role!=="owner"&&d.role!=="slave owner"){return location.replace("/");}}catch{location.replace("/login.html");}
     })()
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
