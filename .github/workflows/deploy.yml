@@ -4,6 +4,10 @@ on:
   push:
     branches: [master]
 
+env:
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+
 jobs:
   deploy-cloudflare:
     name: Cloudflare Workers
@@ -15,83 +19,13 @@ jobs:
           node-version: 22
       - run: npm install
       - run: npm run build
-
-      - name: study-hub-app
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          wranglerVersion: "4.87.0"
-          command: deploy --name study-hub-app
-
-      - name: homework-desk
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          wranglerVersion: "4.87.0"
-          command: deploy --name homework-desk
-
-      - name: class-resource-hub
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          wranglerVersion: "4.87.0"
-          command: deploy --name class-resource-hub
-
-      - name: note-helper-app
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          wranglerVersion: "4.87.0"
-          command: deploy --name note-helper-app
-
-      - name: learn-assist-tool
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          wranglerVersion: "4.87.0"
-          command: deploy --name learn-assist-tool
-
-      - name: edu-toolkit-app
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          wranglerVersion: "4.87.0"
-          command: deploy --name edu-toolkit-app
-
-      - name: desk-helper-hub
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          wranglerVersion: "4.87.0"
-          command: deploy --name desk-helper-hub
-
-      - name: quick-search-tool
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          wranglerVersion: "4.87.0"
-          command: deploy --name quick-search-tool
-
-      - name: browse-assist-app
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          wranglerVersion: "4.87.0"
-          command: deploy --name browse-assist-app
-
-      - name: net-tool-hub
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          wranglerVersion: "4.87.0"
-          command: deploy --name net-tool-hub
+      - run: npx wrangler deploy --name study-hub-app
+      - run: npx wrangler deploy --name homework-desk
+      - run: npx wrangler deploy --name class-resource-hub
+      - run: npx wrangler deploy --name note-helper-app
+      - run: npx wrangler deploy --name learn-assist-tool
+      - run: npx wrangler deploy --name edu-toolkit-app
+      - run: npx wrangler deploy --name desk-helper-hub
+      - run: npx wrangler deploy --name quick-search-tool
+      - run: npx wrangler deploy --name browse-assist-app
+      - run: npx wrangler deploy --name net-tool-hub
