@@ -110,6 +110,15 @@ async function handleBare(request) {
   for (const h of fwdHdrs) { const v = request.headers.get(h); if (v) reqHeaders[h] = v; }
 
   try {
+    // Strip headers that cause Cloudflare to block the request
+    delete reqHeaders["host"];
+    delete reqHeaders["cf-connecting-ip"];
+    delete reqHeaders["cf-ipcountry"];
+    delete reqHeaders["cf-ray"];
+    delete reqHeaders["cf-visitor"];
+    delete reqHeaders["x-forwarded-for"];
+    delete reqHeaders["x-real-ip"];
+
     const fetchOpts = { method: request.method, headers: reqHeaders, redirect: "manual" };
     if (!["GET", "HEAD"].includes(request.method)) fetchOpts.body = request.body;
 

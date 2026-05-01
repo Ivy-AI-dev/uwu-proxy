@@ -10,91 +10,108 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-
       - run: npm install
       - run: npm run build
 
-      # Deploy 8 separate worker instances — each gets its own URL
-      - name: Deploy uwu-proxy (main)
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          command: deploy --name uwu-proxy
-        env:
-          GROQ_API_KEY:  ${{ secrets.GROQ_API_KEY }}
-          TMDB_API_KEY:  ${{ secrets.TMDB_API_KEY }}
-
-      - name: Deploy uwu-proxy-2
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          command: deploy --name uwu-proxy-2
-        env:
-          GROQ_API_KEY:  ${{ secrets.GROQ_API_KEY }}
-          TMDB_API_KEY:  ${{ secrets.TMDB_API_KEY }}
-
-      - name: Deploy uwu-proxy-3
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          command: deploy --name uwu-proxy-3
-        env:
-          GROQ_API_KEY:  ${{ secrets.GROQ_API_KEY }}
-          TMDB_API_KEY:  ${{ secrets.TMDB_API_KEY }}
-
-      - name: Deploy uwu-proxy-4
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          command: deploy --name uwu-proxy-4
-        env:
-          GROQ_API_KEY:  ${{ secrets.GROQ_API_KEY }}
-          TMDB_API_KEY:  ${{ secrets.TMDB_API_KEY }}
-
-      - name: Deploy uwu-proxy-5
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          command: deploy --name uwu-proxy-5
-        env:
-          GROQ_API_KEY:  ${{ secrets.GROQ_API_KEY }}
-          TMDB_API_KEY:  ${{ secrets.TMDB_API_KEY }}
-
-      - name: Deploy study-hub-app
+      - name: study-hub-app
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
           command: deploy --name study-hub-app
         env:
-          GROQ_API_KEY:  ${{ secrets.GROQ_API_KEY }}
-          TMDB_API_KEY:  ${{ secrets.TMDB_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
 
-      - name: Deploy homework-helper-app
+      - name: homework-desk
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          command: deploy --name homework-helper-app
+          command: deploy --name homework-desk
         env:
-          GROQ_API_KEY:  ${{ secrets.GROQ_API_KEY }}
-          TMDB_API_KEY:  ${{ secrets.TMDB_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
 
-      - name: Deploy class-notes-hub
+      - name: class-resource-hub
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          command: deploy --name class-notes-hub
+          command: deploy --name class-resource-hub
         env:
-          GROQ_API_KEY:  ${{ secrets.GROQ_API_KEY }}
-          TMDB_API_KEY:  ${{ secrets.TMDB_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+
+      - name: note-helper-app
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          command: deploy --name note-helper-app
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+
+      - name: learn-assist-tool
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          command: deploy --name learn-assist-tool
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+
+      - name: edu-toolkit-app
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          command: deploy --name edu-toolkit-app
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+
+      - name: desk-helper-hub
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          command: deploy --name desk-helper-hub
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+
+      - name: quick-search-tool
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          command: deploy --name quick-search-tool
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+
+      - name: browse-assist-app
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          command: deploy --name browse-assist-app
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+
+      - name: net-tool-hub
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          command: deploy --name net-tool-hub
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
