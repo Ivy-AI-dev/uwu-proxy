@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Links · uwu proxy</title>
+  <script>(function(){var s=localStorage.getItem("uwu_session");if(!s)return location.replace("/login.html");try{var d=JSON.parse(s);if(!d.user||Date.now()-d.loginTime>7*24*60*60*1000){localStorage.removeItem("uwu_session");location.replace("/login.html");}}catch{location.replace("/login.html");}})()</script>
+  <link rel="stylesheet" href="/css/style.css"/>
+  <style>
+    .links-hero{text-align:center;padding:60px 24px 40px;}
+    .links-title{font-family:var(--ff-display);font-size:clamp(1.8rem,5vw,3rem);font-weight:700;background:linear-gradient(135deg,var(--pink),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;}
+    .links-sub{color:var(--dim);font-size:.95rem;}
+    .links-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;max-width:900px;margin:0 auto;padding:0 24px 60px;}
+    .link-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;transition:border-color .2s,background .2s;}
+    .link-card:hover{border-color:var(--border-h);background:var(--card-h);}
+    .link-card.active{border-color:rgba(80,250,123,.3);background:rgba(80,250,123,.04);}
+    .link-left{min-width:0;}
+    .link-name{font-family:var(--ff-mono);font-size:.8rem;color:var(--dim);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;}
+    .link-url{font-family:var(--ff-mono);font-size:.82rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .link-status{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0;}
+    .link-status.up{background:var(--mint);box-shadow:0 0 6px rgba(80,250,123,.5);}
+    .link-actions{display:flex;gap:6px;flex-shrink:0;}
+    .link-btn{padding:6px 12px;border-radius:8px;font-size:.75rem;font-weight:700;font-family:var(--ff-display);cursor:pointer;border:1px solid var(--border);background:var(--bg3);color:var(--dim);transition:all .2s;text-decoration:none;}
+    .link-btn:hover{color:var(--text);border-color:rgba(255,255,255,.15);}
+    .link-btn.open{background:linear-gradient(135deg,var(--pink),var(--purple));border:none;color:#fff;}
+    .link-btn.open:hover{opacity:.85;}
+    .status-bar{display:flex;align-items:center;justify-content:center;gap:16px;padding:16px 24px;margin-bottom:8px;font-size:.8rem;color:var(--dim);font-family:var(--ff-mono);}
+    .status-bar span{display:flex;align-items:center;gap:6px;}
+    .no-subdomain{text-align:center;padding:40px 24px;color:var(--dim);}
+    .no-subdomain input{background:var(--bg3);border:1.5px solid var(--border);border-radius:var(--r);padding:10px 16px;color:var(--text);font-family:var(--ff-mono);font-size:.9rem;outline:none;width:100%;max-width:360px;margin:16px auto;display:block;transition:border-color .2s;}
+    .no-subdomain input:focus{border-color:var(--pink);}
+    .no-subdomain .save-btn{padding:10px 24px;background:linear-gradient(135deg,var(--pink),var(--purple));border:none;border-radius:var(--r);color:#fff;font-family:var(--ff-display);font-weight:700;cursor:pointer;}
+  </style>
+</head>
+<body>
+<div class="bg-canvas"><div class="bg-orb"></div><div class="bg-orb"></div><div class="bg-orb"></div></div>
+<canvas id="stars-canvas"></canvas>
+
+<nav class="nav">
+  <span class="nav-credit">Made By Ryder</span>
+  <a class="nav-logo" href="/"><div class="nav-logo-icon"><svg width="20" height="16" viewBox="0 0 20 16" fill="none"><circle cx="6" cy="7" r="3" fill="white"/><circle cx="14" cy="7" r="3" fill="white"/><path d="M5 12 Q10 15.5 15 12" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg></div><span>uwu proxy</span><span class="nav-version">v1.0.0</span></a>
+  <div class="nav-links">
+    <a class="nav-link" href="/"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></a>
+    <a class="nav-link" href="/games.html"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4m-2-2v4"/><circle cx="17" cy="11" r="1" fill="currentColor"/><circle cx="15" cy="13" r="1" fill="currentColor"/></svg><span>Games</span></a>
+    <a class="nav-link" href="/apps.html"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Apps</span></a>
+    <a class="nav-link" href="/ai.html"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M22 2 12 12"/><path d="m17 7 5-5"/></svg><span>AI</span></a>
+    <a class="nav-link active" href="/links.html"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg><span>Links</span></a>
+    <a class="nav-link" href="/music.html"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><span>Music</span></a>
+  </div>
+  <div class="nav-right">
+    <span class="nav-user-badge" id="nav-user"></span>
+    <button class="btn-icon" id="logout-btn" title="Logout"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
+  </div>
+</nav>
+
+<main class="page">
+  <div class="links-hero">
+    <h1 class="links-title">Backup Links</h1>
+    <p class="links-sub">if one gets blocked, use another — they all work the same</p>
+  </div>
+
+  <div class="status-bar" id="status-bar"></div>
+  <div id="links-container"></div>
+</main>
+
+<div class="toast-container" id="toast-container"></div>
+<script src="/js/main.js" type="module"></script>
+<script>
+  const session = JSON.parse(localStorage.getItem("uwu_session") || "{}");
+  document.getElementById("nav-user").textContent = session.user || "";
+  document.getElementById("logout-btn")?.addEventListener("click", () => { localStorage.removeItem("uwu_session"); location.replace("/login.html"); });
+
+  const WORKER_NAMES = [
+    "velvet-note-app",
+    "amber-tide-hub",
+    "cedar-tools-app",
+    "maple-stream",
+    "cobalt-lens-app",
+    "indigo-wave",
+    "onyx-path-hub",
+    "prism-gate-app",
+    "quartz-hub",
+    "lunar-stack-app",
+  ];
+
+  // Auto-detect the workers.dev subdomain from current hostname
+  // e.g. "study-hub-app.kickxly0.workers.dev" → "kickxly0.workers.dev"
+  function getSubdomain() {
+    const saved = localStorage.getItem("uwu_subdomain");
+    if (saved) return saved;
+    const h = window.location.hostname;
+    if (h.includes(".workers.dev")) {
+      const parts = h.split(".");
+      // Remove first segment (worker name), keep rest
+      return parts.slice(1).join(".");
+    }
+    return null;
+  }
+
+  function saveSubdomain(sub) {
+    localStorage.setItem("uwu_subdomain", sub);
+  }
+
+  function buildUrl(name, subdomain) {
+    return `https://${name}.${subdomain}`;
+  }
+
+  function renderLinks(subdomain) {
+    const current = window.location.hostname.split(".")[0];
+    const container = document.getElementById("links-container");
+    const statusBar  = document.getElementById("status-bar");
+
+    const urls = WORKER_NAMES.map(name => ({ name, url: buildUrl(name, subdomain) }));
+
+    container.innerHTML = `<div class="links-grid">${urls.map(({ name, url }) => {
+      const isActive = name === current;
+      return `<div class="link-card ${isActive ? "active" : ""}" id="card-${name}">
+        <div class="link-left">
+          <div class="link-name">${isActive ? "current" : "backup"}</div>
+          <div class="link-url">${url}</div>
+        </div>
+        <div class="link-actions">
+          <div class="link-status" id="status-${name}"></div>
+          <button class="link-btn" onclick="copyLink('${url}')">copy</button>
+          <a class="link-btn open" href="${url}" target="_blank">open</a>
+        </div>
+      </div>`;
+    }).join("")}</div>`;
+
+    statusBar.innerHTML = `
+      <span><div style="width:8px;height:8px;border-radius:50%;background:var(--mint);box-shadow:0 0 6px rgba(80,250,123,.5)"></div> online</span>
+      <span style="color:var(--muted)">·</span>
+      <span>${urls.length} links total</span>
+      <span style="color:var(--muted)">·</span>
+      <span><a href="#" onclick="resetSubdomain()" style="color:var(--dim);font-size:.75rem">change subdomain</a></span>`;
+
+    // Ping each URL to check if it's up
+    urls.forEach(({ name, url }) => {
+      fetch(url + "/api/auth", { method: "OPTIONS", signal: AbortSignal.timeout(4000) })
+        .then(() => { const el = document.getElementById("status-" + name); if (el) { el.classList.add("up"); } })
+        .catch(() => {});
+    });
+  }
+
+  function showSetup() {
+    document.getElementById("links-container").innerHTML = `
+      <div class="no-subdomain">
+        <div style="font-size:1.1rem;font-weight:600;margin-bottom:8px">Enter your workers.dev subdomain</div>
+        <div style="font-size:.85rem;margin-bottom:4px">It's the part after the worker name in your URL.</div>
+        <div style="font-size:.82rem;color:var(--muted);margin-bottom:16px">e.g. if your URL is <code style="color:var(--pink)">study-hub-app.kickxly0.workers.dev</code><br>enter <code style="color:var(--pink)">kickxly0.workers.dev</code></div>
+        <input id="sub-input" type="text" placeholder="yourname.workers.dev" autocomplete="off"/>
+        <br/>
+        <button class="save-btn" onclick="saveSub()">Save</button>
+      </div>`;
+  }
+
+  function saveSub() {
+    const val = document.getElementById("sub-input")?.value.trim();
+    if (!val || !val.includes(".workers.dev")) {
+      alert("Enter in format: yourname.workers.dev");
+      return;
+    }
+    saveSubdomain(val);
+    renderLinks(val);
+  }
+
+  function resetSubdomain() {
+    localStorage.removeItem("uwu_subdomain");
+    showSetup();
+    return false;
+  }
+
+  function copyLink(url) {
+    navigator.clipboard.writeText(url).then(() => {
+      const c = document.getElementById("toast-container");
+      if (!c) return;
+      const el = document.createElement("div");
+      el.className = "toast success";
+      el.innerHTML = "<span>✓</span><span>copied</span>";
+      c.appendChild(el);
+      setTimeout(() => { el.style.animation = "toastOut .3s ease forwards"; setTimeout(() => el.remove(), 300); }, 2000);
+    });
+  }
+
+  const sub = getSubdomain();
+  if (sub) renderLinks(sub);
+  else showSetup();
+</script>
+</body>
+</html>

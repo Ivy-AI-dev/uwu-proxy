@@ -19,13 +19,13 @@ jobs:
           node-version: 22
       - run: npm install
       - run: npm run build
-      - run: npx wrangler deploy --name study-hub-app
-      - run: npx wrangler deploy --name homework-desk
-      - run: npx wrangler deploy --name class-resource-hub
-      - run: npx wrangler deploy --name note-helper-app
-      - run: npx wrangler deploy --name learn-assist-tool
-      - run: npx wrangler deploy --name edu-toolkit-app
-      - run: npx wrangler deploy --name desk-helper-hub
-      - run: npx wrangler deploy --name quick-search-tool
-      - run: npx wrangler deploy --name browse-assist-app
-      - run: npx wrangler deploy --name net-tool-hub
+      - run: npx wrangler deploy --name velvet-note-app
+      - run: npx wrangler deploy --name amber-tide-hub
+      - run: npx wrangler deploy --name cedar-tools-app
+      - run: npx wrangler deploy --name maple-stream
+      - run: npx wrangler deploy --name cobalt-lens-app
+      - run: npx wrangler deploy --name indigo-wave
+      - run: npx wrangler deploy --name onyx-path-hub
+      - run: npx wrangler deploy --name prism-gate-app
+      - run: npx wrangler deploy --name quartz-hub
+      - run: npx wrangler deploy --name lunar-stack-app
