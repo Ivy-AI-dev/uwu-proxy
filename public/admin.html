@@ -8,394 +8,132 @@
     (function(){
       var s=localStorage.getItem("uwu_session");
       if(!s)return location.replace("/login.html");
-      try{var d=JSON.parse(s);if(!d.user||Date.now()-d.loginTime>7*24*60*60*1000||d.role!=="owner"&&d.role!=="slave owner"){return location.replace("/");}}catch{location.replace("/login.html");}
+      try{var d=JSON.parse(s);if(!d.user||Date.now()-d.loginTime>7*24*60*60*1000||
+        (d.role!=="owner"&&d.role!=="slave owner")){return location.replace("/");}}
+      catch{location.replace("/login.html");}
     })()
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Comfortaa:wght@600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
   <style>
-    :root{--bg:#050510;--bg2:#0c0c1e;--bg3:#13132b;--border:rgba(255,255,255,0.07);--pink:#ff79c6;--purple:#bd93f9;--mint:#50fa7b;--yellow:#f1fa8c;--red:#ff5555;--cyan:#8be9fd;--text:#f8f8f2;--dim:#6272a4;--muted:#3a3a5c;--r:10px;}
+    :root{--bg:#050510;--bg2:#0c0c1e;--bg3:#13132b;--border:rgba(255,255,255,0.07);--pink:#ff79c6;--purple:#bd93f9;--mint:#50fa7b;--yellow:#f1fa8c;--red:#ff5555;--text:#f8f8f2;--dim:#6272a4;--muted:#3a3a5c;}
     *{box-sizing:border-box;margin:0;padding:0;}
-    body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.6;min-height:100vh;display:flex;flex-direction:column;}
-    .header{padding:16px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:rgba(5,5,16,.95);position:sticky;top:0;z-index:50;backdrop-filter:blur(10px);}
-    .logo{font-family:'Comfortaa',sans-serif;font-size:1rem;font-weight:700;}
-    .pill{padding:3px 9px;border-radius:20px;font-size:.68rem;font-weight:600;border:1px solid;}
+    body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;min-height:100vh;}
+    .header{padding:18px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(5,5,16,.95);position:sticky;top:0;backdrop-filter:blur(12px);}
+    .logo{font-family:'Space Grotesk',sans-serif;font-size:1rem;font-weight:700;display:flex;align-items:center;gap:10px;}
+    .pill{padding:3px 9px;border-radius:12px;font-size:.68rem;font-weight:600;border:1px solid;}
     .pill-pink{background:rgba(255,121,198,.1);border-color:rgba(255,121,198,.25);color:var(--pink);}
     .pill-yellow{background:rgba(241,250,140,.1);border-color:rgba(241,250,140,.25);color:var(--yellow);}
-    .pill-mint{background:rgba(80,250,123,.1);border-color:rgba(80,250,123,.25);color:var(--mint);}
-    .pill-red{background:rgba(255,85,85,.1);border-color:rgba(255,85,85,.25);color:var(--red);}
-    .header-actions{margin-left:auto;display:flex;gap:8px;}
-    .btn{padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--dim);font-family:'JetBrains Mono',monospace;font-size:.78rem;cursor:pointer;transition:all .2s;text-decoration:none;display:inline-flex;align-items:center;gap:6px;}
-    .btn:hover{color:var(--text);border-color:rgba(255,255,255,.15);}
-    .btn-pink{background:linear-gradient(135deg,var(--pink),var(--purple));border:none;color:#fff;}
-    .btn-pink:hover{opacity:.85;color:#fff;}
-    .btn-red{border-color:rgba(255,85,85,.3);color:var(--red);}
-    .btn-red:hover{background:rgba(255,85,85,.1);}
-
-    .layout{display:flex;flex:1;}
-    .sidebar{width:200px;border-right:1px solid var(--border);padding:16px 0;flex-shrink:0;position:sticky;top:57px;height:calc(100vh - 57px);overflow-y:auto;}
-    .nav-item{display:flex;align-items:center;gap:8px;padding:9px 20px;color:var(--dim);cursor:pointer;font-size:.83rem;transition:all .2s;border-left:2px solid transparent;}
-    .nav-item:hover{color:var(--text);background:rgba(255,255,255,.03);}
-    .nav-item.active{color:var(--pink);border-left-color:var(--pink);background:rgba(255,121,198,.05);}
-    .nav-section{padding:16px 20px 6px;font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;}
-
-    .main{flex:1;padding:28px;overflow-y:auto;max-width:900px;}
-    .page{display:none;}
-    .page.active{display:block;}
-    h2{font-family:'Comfortaa',sans-serif;font-size:.9rem;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px;display:flex;align-items:center;gap:10px;}
-    h2 .count{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--muted);text-transform:none;font-weight:400;}
-
-    .stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:28px;}
-    .stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px;}
-    .stat-label{font-size:.68rem;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
-    .stat-value{font-size:1.2rem;font-weight:600;}
-
-    table{width:100%;border-collapse:collapse;margin-bottom:24px;}
-    th{text-align:left;padding:9px 14px;border-bottom:1px solid var(--border);color:var(--dim);font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;font-weight:500;}
-    td{padding:11px 14px;border-bottom:1px solid rgba(255,255,255,.03);font-size:.82rem;vertical-align:middle;}
+    .btn-sm{padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--dim);font-family:'JetBrains Mono',monospace;font-size:.78rem;cursor:pointer;transition:all .2s;text-decoration:none;display:inline-flex;align-items:center;}
+    .btn-sm:hover{color:var(--text);border-color:rgba(255,255,255,.15);}
+    .main{max-width:680px;margin:0 auto;padding:36px 24px;}
+    h2{font-family:'Space Grotesk',sans-serif;font-size:.78rem;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px;}
+    table{width:100%;border-collapse:collapse;margin-bottom:36px;}
+    th{text-align:left;padding:9px 14px;border-bottom:1px solid var(--border);color:var(--muted);font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;}
+    td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle;}
     tr:hover td{background:rgba(255,255,255,.02);}
-    .code{font-family:'JetBrains Mono',monospace;letter-spacing:.15em;color:var(--pink);}
-
-    .toggle{display:flex;align-items:center;gap:8px;cursor:pointer;}
-    .toggle-track{width:36px;height:20px;background:var(--bg3);border-radius:10px;position:relative;transition:background .2s;border:1px solid var(--border);}
-    .toggle-track.on{background:var(--mint);}
-    .toggle-thumb{position:absolute;top:2px;left:2px;width:14px;height:14px;background:#fff;border-radius:50%;transition:left .2s;}
-    .toggle-track.on .toggle-thumb{left:18px;}
-
-    input[type=text],input[type=number],select,textarea{background:var(--bg3);border:1.5px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.83rem;outline:none;transition:border-color .2s;width:100%;}
-    input:focus,select:focus,textarea:focus{border-color:var(--pink);}
-    .field{margin-bottom:14px;}
-    .field label{display:block;font-size:.72rem;color:var(--dim);margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;}
-    .field-row{display:flex;gap:10px;}
-    .field-row input,.field-row select{flex:1;}
-
-    .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:16px;}
-    .card-title{font-family:'Comfortaa',sans-serif;font-size:.88rem;font-weight:700;margin-bottom:14px;color:var(--text);}
-
-    .note{background:rgba(241,250,140,.05);border:1px solid rgba(241,250,140,.15);border-radius:var(--r);padding:12px 16px;color:var(--yellow);font-size:.78rem;margin-bottom:16px;line-height:1.6;}
-    .note.blue{background:rgba(139,233,253,.05);border-color:rgba(139,233,253,.15);color:var(--cyan);}
-    .note.red{background:rgba(255,85,85,.05);border-color:rgba(255,85,85,.2);color:var(--red);}
-
-    .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;animation:pulse 2s ease-in-out infinite;}
-    .dot-mint{background:var(--mint);}
-    .dot-red{background:var(--red);}
-    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-
+    .code{font-family:'JetBrains Mono',monospace;letter-spacing:.15em;color:var(--pink);font-size:.9rem;}
+    .role{display:inline-block;padding:2px 8px;border-radius:6px;font-size:.68rem;font-weight:600;}
+    .role-owner{background:rgba(241,250,140,.12);color:var(--yellow);}
+    .role-slave-owner{background:rgba(255,121,198,.12);color:var(--pink);}
+    .role-slave{background:rgba(189,147,249,.12);color:var(--purple);}
     .copy-btn{padding:3px 8px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--dim);font-size:.68rem;cursor:pointer;transition:color .2s;font-family:'JetBrains Mono',monospace;}
     .copy-btn:hover{color:var(--text);}
-    .tag{display:inline-block;padding:2px 7px;border-radius:8px;font-size:.68rem;font-weight:600;}
-    .tag-admin{background:rgba(241,250,140,.12);color:var(--yellow);}
-    .tag-member{background:rgba(189,147,249,.12);color:var(--purple);}
-    .tag-on{background:rgba(80,250,123,.12);color:var(--mint);}
-    .tag-off{background:rgba(255,85,85,.12);color:var(--red);}
-
-    .wip-toggle{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:var(--bg3);border-radius:var(--r);border:1px solid var(--border);margin-bottom:10px;}
-    .wip-label{font-size:.85rem;font-weight:500;}
-    .wip-sub{font-size:.72rem;color:var(--dim);margin-top:2px;}
-
-    a{color:var(--pink);text-decoration:none;}
-    a:hover{text-decoration:underline;}
-
-    @media(max-width:640px){.sidebar{display:none;}.main{padding:16px;}}
+    .whip-btn{padding:6px 16px;border-radius:7px;background:rgba(255,45,85,.12);border:1px solid rgba(255,45,85,.3);color:#ff5555;font-size:.78rem;font-weight:700;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:background .2s,transform .1s;}
+    .whip-btn:hover{background:rgba(255,45,85,.25);transform:scale(1.05);}
+    .whip-btn:active{transform:scale(.96);}
+    .whip-btn:disabled{opacity:.3;pointer-events:none;}
+    .toast-fixed{position:fixed;bottom:20px;right:20px;background:var(--bg2);border:1px solid rgba(80,250,123,.3);border-radius:10px;padding:10px 16px;font-size:.82rem;color:var(--mint);z-index:999;display:none;}
+    a{color:var(--pink);text-decoration:none;}a:hover{text-decoration:underline;}
   </style>
 </head>
 <body>
-
 <div class="header">
-  <span class="logo">uwu proxy</span>
-  <span class="pill pill-pink">v1.0.0</span>
-  <span class="pill pill-yellow">admin</span>
-  <span class="pill pill-mint" id="status-pill"><span class="dot dot-mint"></span>online</span>
-  <div class="header-actions">
-    <a href="/" class="btn">← site</a>
-    <button class="btn btn-red" onclick="localStorage.removeItem('uwu_session');location.replace('/login.html')">logout</button>
+  <div class="logo">
+    uwu proxy
+    <span class="pill pill-pink">admin</span>
+    <span class="pill pill-yellow" id="role-badge"></span>
+  </div>
+  <div style="display:flex;gap:8px">
+    <a href="/" class="btn-sm">← back</a>
+    <button class="btn-sm" onclick="localStorage.removeItem('uwu_session');location.replace('/login.html')" style="color:var(--red);border-color:rgba(255,85,85,.3)">logout</button>
   </div>
 </div>
 
-<div class="layout">
-  <div class="sidebar">
-    <div class="nav-section">Overview</div>
-    <div class="nav-item active" data-page="dashboard">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-      Dashboard
-    </div>
-    <div class="nav-section">Manage</div>
-    <div class="nav-item" data-page="users">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      Users
-    </div>
-    <div class="nav-item" data-page="pages">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-      Pages
-    </div>
-    <div class="nav-item" data-page="games">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4m-2-2v4"/><circle cx="17" cy="11" r="1" fill="currentColor"/><circle cx="15" cy="13" r="1" fill="currentColor"/></svg>
-      Games
-    </div>
-    <div class="nav-section">Settings</div>
-    <div class="nav-item" data-page="settings">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      Settings
-    </div>
-    <div class="nav-item" data-page="setup">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-      Setup / Keys
-    </div>
-  </div>
+<div class="main">
+  <h2>User Codes</h2>
+  <table>
+    <thead><tr><th>Name</th><th>Code</th><th>Role</th><th></th><th id="whip-col"></th></tr></thead>
+    <tbody id="users-tbody"></tbody>
+  </table>
 
-  <div class="main">
-
-    <!-- DASHBOARD -->
-    <div class="page active" id="page-dashboard">
-      <h2>Dashboard</h2>
-      <div class="stat-grid">
-        <div class="stat"><div class="stat-label">Status</div><div class="stat-value" style="color:var(--mint)"><span class="dot dot-mint"></span>online</div></div>
-        <div class="stat"><div class="stat-label">Version</div><div class="stat-value" style="color:var(--pink)">v1.0.0</div></div>
-        <div class="stat"><div class="stat-label">Users</div><div class="stat-value" style="color:var(--purple)">7</div></div>
-        <div class="stat"><div class="stat-label">Games</div><div class="stat-value" style="color:var(--cyan)">39</div></div>
-        <div class="stat"><div class="stat-label">Uptime</div><div class="stat-value" id="uptime-val">—</div></div>
-        <div class="stat"><div class="stat-label">Logged in as</div><div class="stat-value" id="admin-name">—</div></div>
-      </div>
-      <h2>Quick Links</h2>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <a href="/" class="btn">Home</a>
-        <a href="/games.html" class="btn">Games</a>
-        <a href="/apps.html" class="btn">Apps</a>
-        <a href="/ai.html" class="btn">AI</a>
-        <a href="/music.html" class="btn">Music</a>
-        <a href="https://vercel.com/dashboard" target="_blank" class="btn">Netlify</a>
-        <a href="https://github.com/kickxly-dev/uwu-proxy" target="_blank" class="btn">GitHub</a>
-        <a href="https://console.groq.com" target="_blank" class="btn">Groq</a>
-        <a href="https://www.themoviedb.org/settings/api" target="_blank" class="btn">TMDB</a>
-      </div>
-    </div>
-
-    <!-- USERS -->
-    <div class="page" id="page-users">
-      <h2>Users <span class="count">— 6 members</span></h2>
-      <div class="note">codes are validated server-side. to change a code, update the env var in Netlify and redeploy.</div>
-      <table>
-        <thead><tr><th>Name</th><th>Code</th><th>Role</th><th>Env Var</th><th>Copy</th></tr></thead>
-        <tbody id="users-tbody"></tbody>
-      </table>
-      <div class="card">
-        <div class="card-title">Session Info</div>
-        <div style="color:var(--dim);font-size:.8rem;line-height:1.8">
-          Sessions expire after <strong style="color:var(--text)">7 days</strong>.<br/>
-          Users are redirected to <strong style="color:var(--text)">/login.html</strong> when their session expires.<br/>
-          To force logout someone: ask them to clear site data, or change their code via Vercel env vars.
-        </div>
-      </div>
-    </div>
-
-    <!-- PAGES -->
-    <div class="page" id="page-pages">
-      <h2>Page Controls</h2>
-      <div class="note blue">These toggles control which pages show an "under construction" overlay. Changes take effect on next deploy.</div>
-
-      <div id="page-toggles"></div>
-
-      <div class="card" style="margin-top:20px">
-        <div class="card-title">How to apply changes</div>
-        <div style="color:var(--dim);font-size:.8rem;line-height:1.8">
-          1. Toggle the pages you want<br/>
-          2. Click <strong style="color:var(--pink)">Save & Deploy</strong> below<br/>
-          3. Netlify rebuilds in ~30s
-        </div>
-        <div style="margin-top:14px;display:flex;gap:10px">
-          <button class="btn btn-pink" onclick="savePageState()">Save & Deploy</button>
-          <button class="btn" onclick="loadPageState()">Reset</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- GAMES -->
-    <div class="page" id="page-games">
-      <h2>Games <span class="count">— 39 total</span></h2>
-      <div class="note blue">Local games load instantly from the repo. Proxied games go through the bare server.</div>
-      <table>
-        <thead><tr><th>Name</th><th>Type</th><th>Category</th><th>URL</th></tr></thead>
-        <tbody id="games-tbody"></tbody>
-      </table>
-    </div>
-
-    <!-- SETTINGS -->
-    <div class="page" id="page-settings">
-      <h2>Site Settings</h2>
-      <div class="card">
-        <div class="card-title">Tab Cloak Defaults</div>
-        <div class="field"><label>Default Tab Title</label><input type="text" id="default-title" value="Google" placeholder="Google"/></div>
-        <div class="field"><label>Default Favicon URL</label><input type="text" id="default-icon" value="https://www.google.com/favicon.ico" placeholder="https://..."/></div>
-        <button class="btn btn-pink" onclick="saveTabCloak()">Apply to My Session</button>
-      </div>
-      <div class="card">
-        <div class="card-title">Danger Zone</div>
-        <div class="note red">These actions affect all users.</div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <button class="btn btn-red" onclick="if(confirm('Force logout all users?'))clearAllSessions()">Force Logout All</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- SETUP -->
-    <div class="page" id="page-setup">
-      <h2>Setup & API Keys</h2>
-      <div class="note">All keys are stored as Netlify environment variables — never in the code.</div>
-
-      <div class="card">
-        <div class="card-title">AI — Groq</div>
-        <div style="color:var(--dim);font-size:.8rem;margin-bottom:12px">Go to <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a> → Create API Key → copy it → add to Netlify as <code style="color:var(--pink)">GROQ_API_KEY</code></div>
-        <div style="color:var(--dim);font-size:.8rem">Current model: <strong style="color:var(--text)">llama-3.3-70b-versatile</strong></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">Movies — TMDB</div>
-        <div style="color:var(--dim);font-size:.8rem;margin-bottom:12px">Go to <a href="https://www.themoviedb.org/settings/api" target="_blank">themoviedb.org/settings/api</a> → Create API Key → add to Netlify as <code style="color:var(--pink)">TMDB_API_KEY</code></div>
-        <div style="color:var(--dim);font-size:.8rem">Movies page is currently: <strong style="color:var(--yellow)">under construction</strong></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">User Codes — Netlify Env Vars</div>
-        <div style="color:var(--dim);font-size:.8rem;margin-bottom:12px">To change a user's code, add or update these env vars in Netlify:</div>
-        <table>
-          <thead><tr><th>User</th><th>Env Var</th><th>Default Code</th></tr></thead>
-          <tbody>
-            <tr><td>Ryder</td><td><code style="color:var(--pink)">CODE_RYDER</code></td><td class="code">47291</td></tr>
-            <tr><td>Beckham</td><td><code style="color:var(--pink)">CODE_BECKHAM</code></td><td class="code">83650</td></tr>
-            <tr><td>Kollby</td><td><code style="color:var(--pink)">CODE_KOLLBY</code></td><td class="code">29174</td></tr>
-            <tr><td>Levi</td><td><code style="color:var(--pink)">CODE_LEVI</code></td><td class="code">61837</td></tr>
-            <tr><td>Liam</td><td><code style="color:var(--pink)">CODE_LIAM</code></td><td class="code">94523</td></tr>
-            <tr><td>Logan</td><td><code style="color:var(--pink)">CODE_LOGAN</code></td><td class="code">35817</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
+  <h2>Quick Links</h2>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <a href="/links.html" class="btn-sm">Backup Links</a>
+    <a href="https://app.netlify.com" target="_blank" class="btn-sm">Netlify</a>
+    <a href="https://github.com/kickxly-dev/uwu-proxy" target="_blank" class="btn-sm">GitHub</a>
+    <a href="https://console.groq.com" target="_blank" class="btn-sm">Groq (AI key)</a>
   </div>
 </div>
 
-<div id="toast" style="position:fixed;bottom:20px;right:20px;background:var(--bg2);border:1px solid rgba(80,250,123,.3);border-radius:10px;padding:10px 16px;font-size:.8rem;color:var(--mint);z-index:999;display:none;"></div>
+<div class="toast-fixed" id="toast"></div>
 
 <script>
-  const session = JSON.parse(localStorage.getItem("uwu_session") || "{}");
-  document.getElementById("admin-name").textContent = session.user || "—";
-
-  // Uptime counter
-  const start = Date.now();
-  setInterval(() => {
-    const s = Math.floor((Date.now()-start)/1000);
-    const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sc=s%60;
-    document.getElementById("uptime-val").textContent = `${h}h ${m}m ${sc}s`;
-  }, 1000);
-
-  // Nav
-  document.querySelectorAll(".nav-item").forEach(item => {
-    item.addEventListener("click", () => {
-      document.querySelectorAll(".nav-item").forEach(i=>i.classList.remove("active"));
-      document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
-      item.classList.add("active");
-      document.getElementById("page-"+item.dataset.page).classList.add("active");
-    });
-  });
-
-  // Users table
   const USERS = [
-    { user:"Ryder",   code:"82047", role:"owner",       env:"CODE_RYDER"   },
-    { user:"Logan",   code:"63914", role:"slave owner", env:"CODE_LOGAN"   },
-    { user:"Beckham", code:"39571", role:"slave",       env:"CODE_BECKHAM" },
-    { user:"Kolby",   code:"74286", role:"slave",       env:"CODE_KOLBY"   },
-    { user:"Levi",    code:"51839", role:"slave",       env:"CODE_LEVI"    },
-    { user:"Liam",    code:"26473", role:"slave",       env:"CODE_LIAM"    },
-    { user:"Gibson",  code:"98132", role:"slave",       env:"CODE_GIBSON"  },
+    { user:"Ryder",   code:"82047", role:"owner"       },
+    { user:"Logan",   code:"63914", role:"slave owner" },
+    { user:"Beckham", code:"39571", role:"slave"       },
+    { user:"Kolby",   code:"74286", role:"slave"       },
+    { user:"Levi",    code:"51839", role:"slave"       },
+    { user:"Liam",    code:"26473", role:"slave"       },
+    { user:"Gibson",  code:"98132", role:"slave"       },
   ];
-  document.getElementById("users-tbody").innerHTML = USERS.map(u=>`
-    <tr>
+
+  const session = JSON.parse(localStorage.getItem("uwu_session") || "{}");
+  const canWhip = session.role === "owner" || session.role === "slave owner";
+
+  document.getElementById("role-badge").textContent = session.role || "";
+  if (canWhip) document.getElementById("whip-col").textContent = "WHIP";
+
+  document.getElementById("users-tbody").innerHTML = USERS.map(u => {
+    const rc = u.role === "owner" ? "role-owner" : u.role === "slave owner" ? "role-slave-owner" : "role-slave";
+    const showWhip = canWhip && u.role === "slave" && u.user !== session.user;
+    return `<tr>
       <td><strong>${u.user}</strong></td>
       <td class="code">${u.code}</td>
-      <td><span class="tag tag-${u.role}">${u.role}</span></td>
-      <td style="color:var(--dim);font-size:.75rem"><code>${u.env}</code></td>
+      <td><span class="role ${rc}">${u.role}</span></td>
       <td><button class="copy-btn" onclick="copy('${u.code}','${u.user}')">copy</button></td>
-    </tr>`).join("");
+      <td>${showWhip ? `<button class="whip-btn" id="wb-${u.user}" onclick="whip('${u.user}','${u.code}',this)">WHIP</button>` : ""}</td>
+    </tr>`;
+  }).join("");
 
-  // Pages toggle
-  const PAGES = [
-    { id:"movies",  label:"Movies",  path:"/movies.html",  sub:"Currently: under construction" },
-    { id:"ai",      label:"AI",      path:"/ai.html",      sub:"Requires GROQ_API_KEY"          },
-    { id:"music",   label:"Music",   path:"/music.html",   sub:"Music streaming hub"            },
-    { id:"games",   label:"Games",   path:"/games.html",   sub:"29 local + 10 proxied games"    },
-    { id:"apps",    label:"Apps",    path:"/apps.html",    sub:"App shortcuts"                   },
-  ];
-  const pageState = JSON.parse(localStorage.getItem("uwu_page_state") || "{}");
-  function loadPageState() {
-    document.getElementById("page-toggles").innerHTML = PAGES.map(p => {
-      const on = pageState[p.id] !== false;
-      return `<div class="wip-toggle">
-        <div><div class="wip-label">${p.label}</div><div class="wip-sub">${p.sub}</div></div>
-        <div class="toggle" onclick="togglePage('${p.id}',this)">
-          <div class="toggle-track ${on?'on':''}" id="toggle-${p.id}"><div class="toggle-thumb"></div></div>
-          <span style="font-size:.78rem;color:var(--dim)" id="toggle-label-${p.id}">${on?'live':'hidden'}</span>
-        </div>
-      </div>`;
-    }).join("");
-  }
-  function togglePage(id, el) {
-    const track = document.getElementById("toggle-"+id);
-    const isOn = track.classList.toggle("on");
-    document.getElementById("toggle-label-"+id).textContent = isOn ? "live" : "hidden";
-    pageState[id] = isOn;
-    localStorage.setItem("uwu_page_state", JSON.stringify(pageState));
-  }
-  function savePageState() {
-    toast("Changes saved — push to GitHub to deploy");
-  }
-  loadPageState();
-
-  // Games table
-  fetch("/js/main.js").then(r=>r.text()).then(src => {
-    const match = src.match(/const GAMES = \[([\s\S]*?)\];/);
-    if (!match) return;
-    const lines = match[1].split("\n").filter(l=>l.includes("name:"));
-    const tbody = document.getElementById("games-tbody");
-    const rows = lines.map(line => {
-      const name  = (line.match(/name:\s*"([^"]+)"/) || [])[1] || "";
-      const url   = (line.match(/url:\s*"([^"]+)"/)  || [])[1] || "";
-      const tag   = (line.match(/tag:\s*"([^"]+)"/)  || [])[1] || "";
-      const local = line.includes("local: true");
-      if (!name) return "";
-      return `<tr>
-        <td><strong>${name}</strong></td>
-        <td><span class="tag ${local?'tag-on':'tag-member'}">${local?'local':'proxy'}</span></td>
-        <td style="color:var(--dim)">${tag}</td>
-        <td style="color:var(--muted);font-size:.72rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${url}">${url}</td>
-      </tr>`;
-    }).join("");
-    tbody.innerHTML = rows;
-  });
-
-  // Settings
-  function saveTabCloak() {
-    const title = document.getElementById("default-title").value;
-    const icon  = document.getElementById("default-icon").value;
-    localStorage.setItem("uwu_cloak", JSON.stringify({ title, iconUrl: icon }));
-    toast("Tab cloak updated for your session");
+  async function whip(name, code, btn) {
+    btn.disabled = true;
+    btn.textContent = "sending...";
+    try {
+      await fetch(`https://ntfy.sh/uwuprx-${code}`, {
+        method: "POST",
+        headers: { "Title": session.user, "Priority": "high" },
+        body: "whipped",
+      });
+      btn.textContent = "sent!";
+      showToast(`${name} got whipped 💀`);
+    } catch {
+      btn.textContent = "failed";
+    }
+    setTimeout(() => { btn.disabled = false; btn.textContent = "WHIP"; }, 3000);
   }
 
-  function clearAllSessions() {
-    localStorage.removeItem("uwu_session");
-    toast("Your session cleared — others clear on next visit");
-    setTimeout(() => location.replace("/login.html"), 1500);
+  function copy(code, name) {
+    navigator.clipboard.writeText(code).then(() => showToast(`copied ${name}'s code`));
   }
 
-  // Helpers
-  function copy(text, label) {
-    navigator.clipboard.writeText(text).then(() => toast(`Copied ${label}'s code`));
-  }
-  function toast(msg) {
-    const el = document.getElementById("toast");
-    el.textContent = msg;
-    el.style.display = "block";
-    clearTimeout(toast._t);
-    toast._t = setTimeout(() => el.style.display = "none", 2500);
+  function showToast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.style.display = "block";
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => t.style.display = "none", 2500);
   }
 </script>
 </body>

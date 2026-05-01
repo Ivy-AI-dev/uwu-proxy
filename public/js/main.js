@@ -421,6 +421,64 @@ function escHtml(s) {
   return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
 
+// ── Whip system ──────────────────────────
+function initWhipListener() {
+  const session = JSON.parse(localStorage.getItem("uwu_session") || "{}");
+  if (!session.user) return;
+
+  // Channel is derived from their code so it's not guessable
+  const code = Object.entries({
+    Ryder:"82047",Beckham:"39571",Kolby:"74286",Levi:"51839",Liam:"26473",Gibson:"98132",Logan:"63914"
+  }).find(([n]) => n === session.user)?.[1];
+  if (!code) return;
+
+  const channel = `uwuprx-${code}`;
+  const es = new EventSource(`https://ntfy.sh/${channel}/sse`);
+
+  es.addEventListener("message", e => {
+    try {
+      const data = JSON.parse(e.data);
+      if (data.event === "message") showWhipped(data.title || "someone");
+    } catch {}
+  });
+}
+
+function showWhipped(by) {
+  // Flash + overlay
+  const overlay = document.createElement("div");
+  overlay.style.cssText = `position:fixed;inset:0;z-index:99999;background:rgba(220,20,60,0.15);display:flex;flex-direction:column;align-items:center;justify-content:center;backdrop-filter:blur(2px);animation:whipIn .2s ease;`;
+  overlay.innerHTML = `
+    <style>@keyframes whipIn{from{opacity:0;transform:scale(1.05)}to{opacity:1;transform:scale(1)}}
+    @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}</style>
+    <div style="background:#0c0c1e;border:2px solid rgba(255,45,85,0.6);border-radius:20px;padding:40px 48px;text-align:center;max-width:380px;animation:shake .4s ease .1s;box-shadow:0 0 60px rgba(255,45,85,0.3)">
+      <div style="font-size:3rem;margin-bottom:12px">😵</div>
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:1.6rem;font-weight:700;color:#ff2d55;margin-bottom:6px">YOU GOT WHIPPED</div>
+      <div style="color:#6272a4;font-size:.9rem;margin-bottom:24px">by <strong style="color:#f8f8f2">${escHtml(by)}</strong></div>
+      <button onclick="this.closest('div[style]').remove()" style="padding:10px 28px;background:#ff2d55;border:none;border-radius:10px;color:#fff;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.9rem;cursor:pointer;">ow ok</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  playWhipSound();
+  setTimeout(() => overlay.remove(), 8000);
+}
+
+function playWhipSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // whip crack: noise burst
+    const buf = ctx.createBuffer(1, ctx.sampleRate * 0.3, ctx.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 3);
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.6, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    src.connect(gain);
+    gain.connect(ctx.destination);
+    src.start();
+  } catch {}
+}
+
 // ── Boot ─────────────────────────────────
 (async () => {
   loadCloak();
@@ -437,6 +495,6 @@ function escHtml(s) {
   initFilters("game-filters", renderGames);
   initFilters("app-filters",  renderApps);
   await initProxy();
-  // Re-render game play buttons now that proxy is ready
   renderGames(document.querySelector("#game-filters .filter-btn.active")?.dataset.filter || "all");
+  initWhipListener();
 })();
