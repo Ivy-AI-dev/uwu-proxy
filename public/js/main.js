@@ -29,7 +29,7 @@ const GAMES = [
   { name: "LOLBeans",           url: "https://lolbeans.io/",                                          tag: "io",      category: "io",      desc: "Bean battle royale"                  },
   // Classic
   { name: "Minecraft Classic",  url: "https://classic.minecraft.net/",                                tag: "classic", category: "classic", desc: "Classic Minecraft in browser"        },
-  { name: "Eaglercraft",        url: "https://3kh0.github.io/projects/minecraft/index.html",          tag: "classic", category: "classic", desc: "Full Minecraft browser edition"      },
+  { name: "Minecraft (Eaglercraft)", url: "https://3kh0.github.io/projects/minecraft/index.html",     tag: "classic", category: "classic", desc: "Full Minecraft browser edition"      },
   { name: "Google Snake",       url: "https://3kh0.github.io/projects/google-snake/index.html",       tag: "classic", category: "classic", desc: "Classic snake game"                  },
   { name: "Lichess",            url: "https://lichess.org/",                                          tag: "classic", category: "classic", desc: "Free open-source chess"              },
   { name: "Tetris",             url: "https://jstris.jezevec10.com/",                                 tag: "classic", category: "classic", desc: "Competitive Tetris"                  },
