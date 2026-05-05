@@ -170,7 +170,7 @@
   urlBar.addEventListener("keydown", e => {
     if (e.key !== "Enter") return;
     let v = urlBar.value.trim();
-    if (!v.includes(".") || v.includes(" ")) v = `https://duckduckgo.com/?q=${encodeURIComponent(v)}`;
+    if (!v.includes(".") || v.includes(" ")) v = `https://www.google.com/search?q=${encodeURIComponent(v)}`;
     loadUrl(v);
   });
 

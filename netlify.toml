@@ -1,6 +1,6 @@
 [build]
   publish = "public"
-  command = "echo 'no build needed'"
+  command = "npm run build"
 
 # Map /api/* to Netlify functions
 [[redirects]]

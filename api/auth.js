@@ -21,5 +21,5 @@ module.exports = async (req, res) => {
   const match = USERS[code];
   if (!match) return res.status(401).json({ error: "wrong code" });
 
-  return res.status(200).json(match);
+  return res.status(200).json({ ...match, channel: `uwuprx-${code}` });
 };

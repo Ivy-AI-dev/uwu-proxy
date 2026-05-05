@@ -110,7 +110,7 @@ function handleSearch(raw) {
   const input = raw.trim();
   if (!input) return;
   const looksLikeUrl = /^(https?:\/\/)?[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(input);
-  navigate(looksLikeUrl ? input : `https://duckduckgo.com/?q=${encodeURIComponent(input)}`);
+  navigate(looksLikeUrl ? input : `https://www.google.com/search?q=${encodeURIComponent(input)}`);
 }
 
 // ── Favicon helper ───────────────────────
@@ -245,6 +245,34 @@ function initSettings() {
 
   document.getElementById("clear-history-btn")?.addEventListener("click", clearRecent);
   document.getElementById("clear-recent-btn")?.addEventListener("click",  clearRecent);
+
+  // Inject owner-only red theme toggle
+  const _sess = JSON.parse(localStorage.getItem("uwu_session") || "{}");
+  if (_sess.role === "owner") {
+    const modalBody = document.querySelector("#settings-modal .modal-body");
+    if (modalBody) {
+      const grp = document.createElement("div");
+      grp.className = "setting-group";
+      grp.innerHTML = `
+        <div class="setting-label">Appearance <span style="color:var(--yellow);font-size:0.6rem;margin-left:4px">owner only</span></div>
+        <button class="btn-theme-red" id="theme-toggle-btn"></button>`;
+      modalBody.appendChild(grp);
+      function updateThemeBtn() {
+        const btn = document.getElementById("theme-toggle-btn");
+        if (!btn) return;
+        const isRed = localStorage.getItem("uwu_theme") === "red";
+        btn.textContent = isRed ? "🔴 Red Theme — click to reset" : "🔴 Enable Red Theme";
+        btn.style.background = isRed ? "rgba(239,68,68,0.18)" : "rgba(239,68,68,0.07)";
+      }
+      updateThemeBtn();
+      document.getElementById("theme-toggle-btn")?.addEventListener("click", () => {
+        const isRed = localStorage.getItem("uwu_theme") === "red";
+        applyTheme(isRed ? "default" : "red");
+        updateThemeBtn();
+        toast(isRed ? "default theme restored" : "red theme activated 🔴", "success");
+      });
+    }
+  }
 }
 
 function applyCloak(title, iconUrl) {
@@ -392,19 +420,34 @@ function escHtml(s) {
   return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
 
+// ── Theme ────────────────────────────────
+function applyTheme(theme) {
+  const r = document.documentElement;
+  if (theme === "red") {
+    r.style.setProperty("--pink",     "#ef4444");
+    r.style.setProperty("--purple",   "#dc2626");
+    r.style.setProperty("--border-h", "rgba(239,68,68,0.35)");
+    document.body.classList.add("theme-red");
+  } else {
+    r.style.removeProperty("--pink");
+    r.style.removeProperty("--purple");
+    r.style.removeProperty("--border-h");
+    document.body.classList.remove("theme-red");
+  }
+  localStorage.setItem("uwu_theme", theme || "default");
+}
+
+function loadTheme() {
+  const t = localStorage.getItem("uwu_theme");
+  if (t && t !== "default") applyTheme(t);
+}
+
 // ── Whip system ──────────────────────────
 function initWhipListener() {
   const session = JSON.parse(localStorage.getItem("uwu_session") || "{}");
-  if (!session.user) return;
+  if (!session.user || !session.channel) return;
 
-  // Channel is derived from their code so it's not guessable
-  const code = Object.entries({
-    Ryder:"82047",Beckham:"39571",Kolby:"74286",Levi:"51839",Liam:"26473",Gibson:"98132",Logan:"63914"
-  }).find(([n]) => n === session.user)?.[1];
-  if (!code) return;
-
-  const channel = `uwuprx-${code}`;
-  const es = new EventSource(`https://ntfy.sh/${channel}/sse`);
+  const es = new EventSource(`https://ntfy.sh/${session.channel}/sse`);
 
   es.addEventListener("message", e => {
     try {
@@ -450,8 +493,139 @@ function playWhipSound() {
   } catch {}
 }
 
+// ── Global Chat ──────────────────────────
+const CHAT_CHANNEL             = "uwuprx-chat";
+const ANNOUNCE_CHANNEL         = "uwuprx-announce";
+const MAX_CHAT_MESSAGE_LENGTH  = 200;
+const ANNOUNCEMENT_AUTO_HIDE_MS = 30000;
+
+function initChat() {
+  if (window.location.pathname === "/proxy.html") return;
+  const session = JSON.parse(localStorage.getItem("uwu_session") || "{}");
+  if (!session.user) return;
+
+  const widget = document.createElement("div");
+  widget.id = "uwu-chat";
+  widget.className = "chat-widget";
+  widget.innerHTML = `
+    <button class="chat-fab" id="chat-fab" title="Global Chat">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+      <span class="chat-notif" id="chat-notif">0</span>
+    </button>
+    <div class="chat-panel" id="chat-panel">
+      <div class="chat-panel-hd">
+        <div>
+          <div class="chat-panel-title">global chat</div>
+          <div class="chat-panel-sub">everyone can see this</div>
+        </div>
+        <button class="chat-panel-x" id="chat-panel-x">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="chat-msgs" id="chat-msgs">
+        <div class="chat-msgs-empty">no messages yet — say hi 👋</div>
+      </div>
+      <form class="chat-form" id="chat-form">
+        <input class="chat-inp" id="chat-inp" placeholder="say something..." autocomplete="off" maxlength="${MAX_CHAT_MESSAGE_LENGTH}"/>
+        <button class="chat-submit" type="submit">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </form>
+    </div>`;
+  document.body.appendChild(widget);
+
+  let unread = 0;
+  let chatOpen = false;
+  const fab   = document.getElementById("chat-fab");
+  const panel = document.getElementById("chat-panel");
+  const notif = document.getElementById("chat-notif");
+  const msgs  = document.getElementById("chat-msgs");
+  const form  = document.getElementById("chat-form");
+  const inp   = document.getElementById("chat-inp");
+
+  function toggleChat() {
+    chatOpen = !chatOpen;
+    panel.classList.toggle("open", chatOpen);
+    fab.classList.toggle("open", chatOpen);
+    if (chatOpen) { unread = 0; notif.style.display = "none"; inp.focus(); }
+  }
+
+  fab.addEventListener("click", toggleChat);
+  document.getElementById("chat-panel-x").addEventListener("click", toggleChat);
+
+  function addChatMsg(from, text) {
+    const isMe = from === session.user;
+    const empty = msgs.querySelector(".chat-msgs-empty");
+    if (empty) empty.remove();
+    const el = document.createElement("div");
+    el.className = "chat-msg" + (isMe ? " chat-msg-me" : "");
+    el.innerHTML = `<div class="chat-msg-name">${escHtml(from)}</div><div class="chat-msg-bubble">${escHtml(text)}</div>`;
+    msgs.appendChild(el);
+    msgs.scrollTop = msgs.scrollHeight;
+    if (!chatOpen) {
+      unread++;
+      notif.textContent = unread > 9 ? "9+" : unread;
+      notif.style.display = "flex";
+    }
+  }
+
+  // Subscribe via SSE
+  const es = new EventSource(`https://ntfy.sh/${CHAT_CHANNEL}/sse`);
+  es.addEventListener("message", e => {
+    try {
+      const data = JSON.parse(e.data);
+      if (data.event === "message") addChatMsg(data.title || "?", data.message || "");
+    } catch {}
+  });
+
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    const text = inp.value.trim();
+    if (!text) return;
+    inp.value = "";
+    try {
+      await fetch(`https://ntfy.sh/${CHAT_CHANNEL}`, {
+        method: "POST",
+        headers: { "Title": session.user },
+        body: text,
+      });
+    } catch { toast("couldn't send message", "error"); }
+  });
+}
+
+// ── Announcement listener ────────────────
+function initAnnounceListener() {
+  const es = new EventSource(`https://ntfy.sh/${ANNOUNCE_CHANNEL}/sse`);
+  es.addEventListener("message", e => {
+    try {
+      const data = JSON.parse(e.data);
+      if (data.event === "message") showAnnouncement(data.message || "", data.title || "");
+    } catch {}
+  });
+}
+
+function showAnnouncement(text, from) {
+  const old = document.getElementById("uwu-announce-banner");
+  if (old) old.remove();
+  const banner = document.createElement("div");
+  banner.id = "uwu-announce-banner";
+  banner.className = "announce-banner";
+  banner.innerHTML = `
+    <span class="announce-icon">📣</span>
+    <span class="announce-text">${escHtml(text)}<span class="announce-by">— ${escHtml(from)}</span></span>
+    <button class="announce-close" title="dismiss">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>`;
+  banner.querySelector(".announce-close").addEventListener("click", () => banner.remove());
+  document.body.insertBefore(banner, document.body.firstChild);
+  setTimeout(() => banner?.remove(), ANNOUNCEMENT_AUTO_HIDE_MS);
+}
+
 // ── Boot ─────────────────────────────────
 (async () => {
+  loadTheme();
   loadCloak();
   showVersion();
   initStars();
@@ -468,4 +642,6 @@ function playWhipSound() {
   await initProxy();
   renderGames(document.querySelector("#game-filters .filter-btn.active")?.dataset.filter || "all");
   initWhipListener();
+  initChat();
+  initAnnounceListener();
 })();

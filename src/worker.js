@@ -32,7 +32,7 @@ async function handleAuth(request, env) {
     const { code } = await request.json();
     const match = USERS[String(code || "")];
     if (!match) return json({ error: "wrong code" }, 401);
-    return json(match);
+    return json({ ...match, channel: `uwuprx-${String(code)}` });
   } catch {
     return json({ error: "bad request" }, 400);
   }

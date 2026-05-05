@@ -19,14 +19,14 @@
     :root{--bg:#050510;--bg2:#0c0c1e;--bg3:#13132b;--border:rgba(255,255,255,0.07);--pink:#ff79c6;--purple:#bd93f9;--mint:#50fa7b;--yellow:#f1fa8c;--red:#ff5555;--text:#f8f8f2;--dim:#6272a4;--muted:#3a3a5c;}
     *{box-sizing:border-box;margin:0;padding:0;}
     body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;min-height:100vh;}
-    .header{padding:18px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(5,5,16,.95);position:sticky;top:0;backdrop-filter:blur(12px);}
+    .header{padding:18px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(5,5,16,.95);position:sticky;top:0;backdrop-filter:blur(12px);z-index:10;}
     .logo{font-family:'Space Grotesk',sans-serif;font-size:1rem;font-weight:700;display:flex;align-items:center;gap:10px;}
     .pill{padding:3px 9px;border-radius:12px;font-size:.68rem;font-weight:600;border:1px solid;}
     .pill-pink{background:rgba(255,121,198,.1);border-color:rgba(255,121,198,.25);color:var(--pink);}
     .pill-yellow{background:rgba(241,250,140,.1);border-color:rgba(241,250,140,.25);color:var(--yellow);}
     .btn-sm{padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--dim);font-family:'JetBrains Mono',monospace;font-size:.78rem;cursor:pointer;transition:all .2s;text-decoration:none;display:inline-flex;align-items:center;}
     .btn-sm:hover{color:var(--text);border-color:rgba(255,255,255,.15);}
-    .main{max-width:680px;margin:0 auto;padding:36px 24px;}
+    .main{max-width:720px;margin:0 auto;padding:32px 24px;}
     h2{font-family:'Space Grotesk',sans-serif;font-size:.78rem;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px;}
     table{width:100%;border-collapse:collapse;margin-bottom:36px;}
     th{text-align:left;padding:9px 14px;border-bottom:1px solid var(--border);color:var(--muted);font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;}
@@ -45,6 +45,31 @@
     .whip-btn:disabled{opacity:.3;pointer-events:none;}
     .toast-fixed{position:fixed;bottom:20px;right:20px;background:var(--bg2);border:1px solid rgba(80,250,123,.3);border-radius:10px;padding:10px 16px;font-size:.82rem;color:var(--mint);z-index:999;display:none;}
     a{color:var(--pink);text-decoration:none;}a:hover{text-decoration:underline;}
+    /* Stats row */
+    .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:36px;}
+    .stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:18px 16px;}
+    .stat-num{font-family:'Space Grotesk',sans-serif;font-size:1.6rem;font-weight:700;margin-bottom:4px;}
+    .stat-label{font-size:.72rem;color:var(--dim);}
+    /* Announce section */
+    .announce-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:36px;}
+    .announce-textarea{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.82rem;resize:vertical;min-height:80px;outline:none;transition:border-color .2s;margin-bottom:12px;}
+    .announce-textarea:focus{border-color:rgba(255,121,198,.4);}
+    .announce-textarea::placeholder{color:var(--muted);}
+    .announce-send-btn{padding:9px 20px;background:linear-gradient(135deg,var(--pink),var(--purple));border:none;border-radius:8px;color:#fff;font-family:'Space Grotesk',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:opacity .2s;}
+    .announce-send-btn:hover{opacity:.85;}
+    .announce-send-btn:disabled{opacity:.35;pointer-events:none;}
+    .announce-status{font-size:.75rem;color:var(--mint);margin-top:8px;min-height:18px;}
+    /* Chat section */
+    .chat-preview-box{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:36px;}
+    .chat-msgs-admin{max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+    .chat-msg-admin{font-size:.82rem;padding:6px 10px;background:var(--bg3);border-radius:6px;}
+    .chat-msg-admin strong{color:var(--pink);}
+    .chat-send-row{display:flex;gap:8px;}
+    .chat-inp-admin{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.82rem;outline:none;transition:border-color .2s;}
+    .chat-inp-admin:focus{border-color:rgba(255,121,198,.4);}
+    .chat-inp-admin::placeholder{color:var(--muted);}
+    .chat-btn-admin{padding:8px 16px;background:var(--pink);border:none;border-radius:8px;color:#fff;font-family:'Space Grotesk',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;transition:opacity .2s;white-space:nowrap;}
+    .chat-btn-admin:hover{opacity:.85;}
   </style>
 </head>
 <body>
@@ -61,6 +86,47 @@
 </div>
 
 <div class="main">
+
+  <!-- Stats row -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-num" style="color:var(--pink)">7</div>
+      <div class="stat-label">Total Users</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:var(--mint)">●</div>
+      <div class="stat-label">Operational</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:var(--purple)">v1.0.0</div>
+      <div class="stat-label">Version</div>
+    </div>
+  </div>
+
+  <!-- Send Announcement (owner only) -->
+  <div id="announce-section" style="display:none">
+    <h2>📣 Send Announcement</h2>
+    <div class="announce-box">
+      <textarea class="announce-textarea" id="announce-text" placeholder="type an announcement… everyone will see it instantly"></textarea>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <button class="announce-send-btn" id="announce-btn">📣 Broadcast to All</button>
+        <div class="announce-status" id="announce-status"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Chat -->
+  <h2>💬 Global Chat</h2>
+  <div class="chat-preview-box">
+    <div class="chat-msgs-admin" id="admin-chat-msgs">
+      <div style="color:var(--muted);font-size:.78rem;padding:8px">connecting to chat…</div>
+    </div>
+    <div class="chat-send-row">
+      <input class="chat-inp-admin" id="admin-chat-inp" placeholder="send a message to everyone…" maxlength="200"/>
+      <button class="chat-btn-admin" id="admin-chat-send">Send</button>
+    </div>
+  </div>
+
   <h2>User Codes</h2>
   <table>
     <thead><tr><th>Name</th><th>Code</th><th>Role</th><th></th><th id="whip-col"></th></tr></thead>
@@ -73,7 +139,10 @@
     <a href="https://app.netlify.com" target="_blank" class="btn-sm">Netlify</a>
     <a href="https://github.com/kickxly-dev/uwu-proxy" target="_blank" class="btn-sm">GitHub</a>
     <a href="https://console.groq.com" target="_blank" class="btn-sm">Groq (AI key)</a>
+    <a href="https://ntfy.sh" target="_blank" class="btn-sm">ntfy.sh</a>
   </div>
+  <br/><br/>
+
 </div>
 
 <div class="toast-fixed" id="toast"></div>
@@ -107,6 +176,77 @@
     </tr>`;
   }).join("");
 
+  // Owner-only announcement section
+  if (session.role === "owner") {
+    document.getElementById("announce-section").style.display = "block";
+    document.getElementById("announce-btn").addEventListener("click", async () => {
+      const text = document.getElementById("announce-text").value.trim();
+      if (!text) return;
+      const btn = document.getElementById("announce-btn");
+      const status = document.getElementById("announce-status");
+      btn.disabled = true;
+      status.textContent = "sending…";
+      status.style.color = "var(--dim)";
+      try {
+        await fetch("https://ntfy.sh/uwuprx-announce", {
+          method: "POST",
+          headers: { "Title": session.user, "Priority": "high", "Tags": "loudspeaker" },
+          body: text,
+        });
+        document.getElementById("announce-text").value = "";
+        status.textContent = "✓ broadcast sent!";
+        status.style.color = "var(--mint)";
+        showToast("announcement sent to everyone 📣");
+      } catch {
+        status.textContent = "✕ failed — check connection";
+        status.style.color = "var(--red)";
+      }
+      btn.disabled = false;
+      setTimeout(() => { status.textContent = ""; }, 4000);
+    });
+  }
+
+  // Admin global chat
+  const CHAT_CHANNEL = "uwuprx-chat";
+  const adminChatMsgs = document.getElementById("admin-chat-msgs");
+
+  function addAdminChatMsg(from, text) {
+    const placeholder = adminChatMsgs.querySelector("[style*='connecting']");
+    if (placeholder) placeholder.remove();
+    const el = document.createElement("div");
+    el.className = "chat-msg-admin";
+    el.innerHTML = `<strong>${escHtml(from)}</strong>: ${escHtml(text)}`;
+    adminChatMsgs.appendChild(el);
+    adminChatMsgs.scrollTop = adminChatMsgs.scrollHeight;
+  }
+
+  const chatEs = new EventSource(`https://ntfy.sh/${CHAT_CHANNEL}/sse`);
+  chatEs.addEventListener("message", e => {
+    try {
+      const data = JSON.parse(e.data);
+      if (data.event === "message") addAdminChatMsg(data.title || "?", data.message || "");
+    } catch {}
+  });
+  chatEs.addEventListener("open", () => {
+    const placeholder = adminChatMsgs.querySelector("[style*='connecting']");
+    if (placeholder) placeholder.textContent = "chat connected — live messages will appear here";
+  });
+
+  const adminChatInp = document.getElementById("admin-chat-inp");
+  document.getElementById("admin-chat-send").addEventListener("click", async () => {
+    const text = adminChatInp.value.trim();
+    if (!text) return;
+    adminChatInp.value = "";
+    try {
+      await fetch(`https://ntfy.sh/${CHAT_CHANNEL}`, {
+        method: "POST",
+        headers: { "Title": session.user },
+        body: text,
+      });
+    } catch { showToast("couldn't send message"); }
+  });
+  adminChatInp.addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("admin-chat-send").click(); });
+
   async function whip(name, code, btn) {
     btn.disabled = true;
     btn.textContent = "sending...";
@@ -127,6 +267,8 @@
   function copy(code, name) {
     navigator.clipboard.writeText(code).then(() => showToast(`copied ${name}'s code`));
   }
+
+  function escHtml(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
   function showToast(msg) {
     const t = document.getElementById("toast");

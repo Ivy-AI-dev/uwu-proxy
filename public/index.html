@@ -220,7 +220,7 @@
   if (_nu && _s.user) _nu.textContent = _s.user;
   const _hw = document.getElementById("hero-welcome");
   if (_hw && _s.user) _hw.textContent = `welcome back, ${_s.user.toLowerCase()}.`;
-  if (_s.role === "admin") {
+  if (_s.role === "owner" || _s.role === "slave owner") {
     const al = document.createElement("a");
     al.href = "/admin.html"; al.className = "nav-link"; al.style.color = "var(--yellow)";
     al.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>Admin</span>';
