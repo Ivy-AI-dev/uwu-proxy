@@ -93,6 +93,7 @@
 <script type="module">
   import { ScramjetController } from "/scram/scramjet.bundle.js";
   import { BareMuxConnection } from "/baremux/index.mjs";
+  import { SCRAMJET_CONFIG, SCRAMJET_DB_NAME, isRecoverableScramjetError } from "/js/scramjet-config.js";
 
   const WISP_SERVERS = [
     "wss://wisp.mercuryworkshop.dev/",
@@ -122,7 +123,29 @@
     return value;
   }
 
-  async function initScramjet() {
+  async function deleteScramjetDb() {
+    await new Promise(resolve => {
+      const request = indexedDB.deleteDatabase(SCRAMJET_DB_NAME);
+      request.onsuccess = () => resolve();
+      request.onerror = () => resolve();
+      request.onblocked = () => resolve();
+    });
+  }
+
+  async function resetScramjetState() {
+    try {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(
+        registrations
+          .filter(registration => registration.active?.scriptURL?.includes("/sw.js") || registration.installing?.scriptURL?.includes("/sw.js") || registration.waiting?.scriptURL?.includes("/sw.js"))
+          .map(registration => registration.unregister().catch(() => false))
+      );
+    } catch {}
+
+    await deleteScramjetDb();
+  }
+
+  async function initScramjet(recoveryAttempted = false) {
     try {
       await navigator.serviceWorker.register("/sw.js", { scope: "/", type: "module" });
     } catch {}
@@ -139,16 +162,20 @@
       }
     }
 
-    const controller = new ScramjetController({
-      prefix: "/scramjet/",
-      files: {
-        wasm: "/scram/scramjet.wasm.wasm",
-        sync: "/scram/scramjet.sync.js",
-        worker: "/scram/scramjet.bundle.js",
-      },
-    });
+    const controller = new ScramjetController(SCRAMJET_CONFIG);
 
-    await controller.init("/sw.js");
+    try {
+      await controller.init("/sw.js");
+    } catch (error) {
+      if (!recoveryAttempted && isRecoverableScramjetError(error)) {
+        console.warn("scramjet init hit stale state, resetting once...", error);
+        setStatus("repairing proxy storage...");
+        copy.textContent = "An older broken Scramjet install was detected. Resetting the proxy cache once, then trying again.";
+        await resetScramjetState();
+        return initScramjet(true);
+      }
+      throw error;
+    }
 
     if (!navigator.serviceWorker.controller) {
       await Promise.race([
@@ -180,7 +207,7 @@
     } catch (err) {
       console.error("proxy bootstrap failed:", err);
       setStatus("proxy failed to start", "error");
-      copy.textContent = "The proxy bootstrap hit a real startup error before handoff. Try again in a moment and, if it keeps failing, rebuild the public proxy assets or test a different transport endpoint.";
+      copy.textContent = "The proxy bootstrap hit a real startup error before handoff. If it keeps happening after one retry, the browser may still have an old service worker cached and should be hard-refreshed once.";
     }
   }
 </script>
