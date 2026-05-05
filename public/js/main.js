@@ -494,8 +494,10 @@ function playWhipSound() {
 }
 
 // ── Global Chat ──────────────────────────
-const CHAT_CHANNEL    = "uwuprx-chat";
-const ANNOUNCE_CHANNEL = "uwuprx-announce";
+const CHAT_CHANNEL             = "uwuprx-chat";
+const ANNOUNCE_CHANNEL         = "uwuprx-announce";
+const MAX_CHAT_MESSAGE_LENGTH  = 200;
+const ANNOUNCEMENT_AUTO_HIDE_MS = 30000;
 
 function initChat() {
   if (window.location.pathname === "/proxy.html") return;
@@ -526,7 +528,7 @@ function initChat() {
         <div class="chat-msgs-empty">no messages yet — say hi 👋</div>
       </div>
       <form class="chat-form" id="chat-form">
-        <input class="chat-inp" id="chat-inp" placeholder="say something..." autocomplete="off" maxlength="200"/>
+        <input class="chat-inp" id="chat-inp" placeholder="say something..." autocomplete="off" maxlength="${MAX_CHAT_MESSAGE_LENGTH}"/>
         <button class="chat-submit" type="submit">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         </button>
@@ -618,7 +620,7 @@ function showAnnouncement(text, from) {
     </button>`;
   banner.querySelector(".announce-close").addEventListener("click", () => banner.remove());
   document.body.insertBefore(banner, document.body.firstChild);
-  setTimeout(() => banner?.remove(), 30000);
+  setTimeout(() => banner?.remove(), ANNOUNCEMENT_AUTO_HIDE_MS);
 }
 
 // ── Boot ─────────────────────────────────
