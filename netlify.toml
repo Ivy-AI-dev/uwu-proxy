@@ -32,3 +32,8 @@
   for = "/sw.js"
   [headers.values]
     Service-Worker-Allowed = "/"
+
+[[headers]]
+  for = "/uv/sw.js"
+  [headers.values]
+    Service-Worker-Allowed = "/"
