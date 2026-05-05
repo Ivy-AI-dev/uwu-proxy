@@ -121,13 +121,7 @@
       updateViaCache: "none",
     });
 
-    if (registration.installing) {
-      await new Promise(resolve => {
-        registration.installing.addEventListener("statechange", () => {
-          if (registration.active) resolve();
-        });
-      });
-    } else if (!registration.active) {
+    if (registration.installing || registration.waiting) {
       await navigator.serviceWorker.ready;
     }
 
