@@ -810,16 +810,18 @@ input { font-family: inherit; }
   position: fixed;
   top: 56px; left: 0; right: 0;
   z-index: 300;
-  background: linear-gradient(90deg, rgba(255,121,198,0.1), rgba(189,147,249,0.1));
-  border-bottom: 1px solid rgba(255,121,198,0.3);
-  padding: 11px 24px;
+  background: linear-gradient(90deg, rgba(239,68,68,0.15), rgba(220,38,38,0.08));
+  border-bottom: 1px solid rgba(239,68,68,0.4);
+  padding: 12px 24px;
   display: flex; align-items: center; gap: 10px;
   animation: bannerSlide 0.3s ease;
   backdrop-filter: blur(16px);
+  box-shadow: 0 4px 20px rgba(239,68,68,0.15);
 }
 @keyframes bannerSlide { from { transform: translateY(-100%); opacity:0; } to { transform:none; opacity:1; } }
-.announce-icon { font-size: 1.1rem; flex-shrink: 0; }
-.announce-text { flex: 1; font-size: 0.85rem; }
+.announce-icon { font-size: 1.15rem; flex-shrink: 0; animation: iconPulse 1s ease 0s 3; }
+@keyframes iconPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.25)} }
+.announce-text { flex: 1; font-size: 0.87rem; font-weight: 500; }
 .announce-by   { font-size: 0.7rem; color: var(--dim); font-family: var(--ff-mono); margin-left: 8px; }
 .announce-close {
   width: 24px; height: 24px;

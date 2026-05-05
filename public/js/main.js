@@ -612,8 +612,10 @@ function initAnnounceListener() {
 }
 
 function showAnnouncement(text, from) {
+  // Remove any existing banner first
   const old = document.getElementById("uwu-announce-banner");
   if (old) old.remove();
+
   const banner = document.createElement("div");
   banner.id = "uwu-announce-banner";
   banner.className = "announce-banner";
@@ -625,7 +627,29 @@ function showAnnouncement(text, from) {
     </button>`;
   banner.querySelector(".announce-close").addEventListener("click", () => banner.remove());
   document.body.insertBefore(banner, document.body.firstChild);
+  // Also show as a toast so it's noticed regardless of scroll position
+  toast(`📣 ${from}: ${text}`, "info");
+  playAnnounceTone();
   setTimeout(() => banner?.remove(), ANNOUNCEMENT_AUTO_HIDE_MS);
+}
+
+function playAnnounceTone() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [523, 659, 784].forEach((freq, i) => {
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.12);
+      gain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + i * 0.12 + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.28);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + i * 0.12);
+      osc.stop(ctx.currentTime + i * 0.12 + 0.3);
+    });
+  } catch {}
 }
 
 // ── Boot ─────────────────────────────────
