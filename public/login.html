@@ -12,8 +12,8 @@
     *{box-sizing:border-box;margin:0;padding:0;}
     body{background:var(--bg);color:var(--text);font-family:'Comfortaa',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;}
     .bg-orb{position:fixed;border-radius:50%;filter:blur(80px);opacity:.18;pointer-events:none;}
-    .bg-orb:nth-child(1){width:500px;height:500px;background:radial-gradient(var(--pink),transparent);top:-100px;left:-100px;animation:orb 20s ease-in-out infinite;}
-    .bg-orb:nth-child(2){width:400px;height:400px;background:radial-gradient(var(--purple),transparent);bottom:-80px;right:-80px;animation:orb 20s ease-in-out infinite;animation-delay:-10s;}
+    .bg-orb:nth-child(2){width:500px;height:500px;background:radial-gradient(var(--pink),transparent);top:-100px;left:-100px;animation:orb 20s ease-in-out infinite;}
+    .bg-orb:nth-child(3){width:400px;height:400px;background:radial-gradient(var(--purple),transparent);bottom:-80px;right:-80px;animation:orb 20s ease-in-out infinite;animation-delay:-10s;}
     @keyframes orb{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,-30px)}}
     .card{position:relative;z-index:1;background:rgba(12,12,30,0.9);border:1px solid var(--border);border-radius:24px;padding:48px 40px;width:100%;max-width:380px;text-align:center;backdrop-filter:blur(20px);box-shadow:0 32px 80px rgba(0,0,0,0.5);}
     .logo{width:52px;height:52px;background:linear-gradient(135deg,var(--pink),var(--purple));border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;box-shadow:0 0 24px rgba(255,121,198,0.4);}
@@ -32,6 +32,15 @@
     .success{display:none;text-align:center;padding:20px 0;}
     .success-name{font-size:1.8rem;font-weight:700;background:linear-gradient(135deg,var(--pink),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
     .success-sub{color:var(--dim);font-size:.88rem;margin-top:6px;}
+    /* Splash loading screen */
+    .splash{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;transition:opacity .8s ease;}
+    .splash.hidden{opacity:0;pointer-events:none;}
+    .splash-logo{width:80px;height:80px;background:linear-gradient(135deg,var(--pink),var(--purple));border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 28px;box-shadow:0 0 40px rgba(255,121,198,.5);animation:splashPulse 2s ease-in-out infinite;}
+    @keyframes splashPulse{0%,100%{transform:scale(1);box-shadow:0 0 40px rgba(255,121,198,.5);}50%{transform:scale(1.07);box-shadow:0 0 60px rgba(255,121,198,.8);}}
+    .splash-title{font-size:3rem;font-weight:700;background:linear-gradient(135deg,var(--pink),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;letter-spacing:-.5px;}
+    .splash-tag{font-size:.9rem;color:var(--dim);letter-spacing:.12em;text-transform:uppercase;margin-bottom:48px;}
+    .splash-bar-wrap{width:220px;height:4px;background:var(--muted);border-radius:99px;overflow:hidden;}
+    .splash-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--pink),var(--purple));border-radius:99px;transition:width 6s linear;}
     /* Onboarding overlay */
     .onboard{position:fixed;inset:0;z-index:999;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;animation:fadeIn .4s ease;}
     @keyframes fadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
@@ -46,6 +55,23 @@
   </style>
 </head>
 <body>
+
+<!-- Splash loading screen -->
+<div class="splash" id="splash">
+  <div class="splash-logo">
+    <svg viewBox="0 0 20 16" fill="none" width="38" height="30">
+      <circle cx="6" cy="7" r="3" fill="white"/>
+      <circle cx="14" cy="7" r="3" fill="white"/>
+      <path d="M5 12 Q10 15.5 15 12" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <div class="splash-title">uwu proxy</div>
+  <div class="splash-tag">protected by israel ai</div>
+  <div class="splash-bar-wrap">
+    <div class="splash-bar" id="splash-bar"></div>
+  </div>
+</div>
+
 <div class="bg-orb"></div>
 <div class="bg-orb"></div>
 
@@ -104,6 +130,18 @@
 </div>
 
 <script>
+  // Splash screen – 6 seconds then reveal login
+  (function(){
+    const splash = document.getElementById("splash");
+    const bar = document.getElementById("splash-bar");
+    // Trigger bar animation on next frame
+    requestAnimationFrame(() => { bar.style.width = "100%"; });
+    setTimeout(() => {
+      splash.classList.add("hidden");
+      setTimeout(() => { splash.style.display = "none"; }, 800);
+    }, 6000);
+  })();
+
   const boxes  = document.querySelectorAll(".pin-box");
   const btn    = document.getElementById("submit-btn");
   const errEl  = document.getElementById("error-msg");
