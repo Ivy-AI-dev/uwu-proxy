@@ -23,7 +23,6 @@
     const p = new URLSearchParams(location.search);
     const u = p.get("url");
     const n = p.get("name");
-    const isDirect = p.get("direct") === "1";
     const loader = document.getElementById("gf-loading");
     const frame  = document.getElementById("gf");
 
@@ -40,28 +39,22 @@
 
     document.title = (n ? n.slice(0, 80) + " · " : "") + "uwu proxy";
 
-    if (isDirect) {
-      // Game is already embeddable — skip the service worker entirely for instant load.
-      frame.src = parsed.href;
-    } else {
-      // Register the UV service worker so it can strip X-Frame-Options / CSP
-      // frame-ancestors headers, then point the iframe at the proxied URL.
-      import("/uv/uv.bundle.js").then(() => import("/uv/uv.config.js")).then(async () => {
-        try {
-          const reg = await navigator.serviceWorker.register("/uv/sw.js", {
-            scope: __uv$config.prefix,
-            updateViaCache: "none",
-          });
-          if (reg.installing || reg.waiting) {
-            await navigator.serviceWorker.ready;
-          }
-          frame.src = __uv$config.prefix + __uv$config.encodeUrl(parsed.href);
-        } catch {
-          // Service worker unavailable (e.g. non-HTTPS dev) — fall back to direct src
-          frame.src = parsed.href;
+    // Always prefer the UV route so iframe-blocking headers are stripped reliably.
+    // If the worker cannot start (e.g. local non-HTTPS dev), fall back to direct.
+    import("/uv/uv.bundle.js").then(() => import("/uv/uv.config.js")).then(async () => {
+      try {
+        const reg = await navigator.serviceWorker.register("/uv/sw.js", {
+          scope: __uv$config.prefix,
+          updateViaCache: "none",
+        });
+        if (reg.installing || reg.waiting) {
+          await navigator.serviceWorker.ready;
         }
-      });
-    }
+        frame.src = __uv$config.prefix + __uv$config.encodeUrl(parsed.href);
+      } catch {
+        frame.src = parsed.href;
+      }
+    });
 
     frame.addEventListener("load",  () => loader.classList.add("hidden"), { once: true });
     frame.addEventListener("error", () => loader.classList.add("hidden"), { once: true });
