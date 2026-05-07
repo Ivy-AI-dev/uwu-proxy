@@ -11,6 +11,7 @@ module.exports = async (req, res) => {
 
   const body = typeof req.body === "object" ? req.body : JSON.parse(await rawBody(req));
   const { messages } = body;
+  if (!Array.isArray(messages)) return res.status(400).json({ error: "messages must be an array" });
 
   const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",

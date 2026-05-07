@@ -97,11 +97,12 @@ app.get(Object.keys(SW_FILES), (req, res) => {
   res.sendFile(SW_FILES[req.path]);
 });
 
-app.options(["/api/auth", "/api/auth-codes"], (req, res) => {
+app.options(["/api/auth", "/api/auth-codes", "/api/ai", "/api/movies", "/api/chat/send", "/api/presence"], (req, res) => {
   res.set(CORS).status(200).end();
 });
 
 app.post("/api/auth", (req, res) => {
+  res.set(CORS);
   const code = String(req.body?.code || "");
   const match = getEffectiveUsers().find(u => u.code === code);
   if (!match) return res.status(401).json({ error: "wrong code" });
@@ -109,10 +110,12 @@ app.post("/api/auth", (req, res) => {
 });
 
 app.get("/api/auth-codes", (req, res) => {
+  res.set(CORS);
   return res.status(200).json({ users: getEffectiveUsers() });
 });
 
 app.post("/api/auth-codes", (req, res) => {
+  res.set(CORS);
   const actorCode = String(req.body?.actorCode || "");
   const user = String(req.body?.user || "");
   const code = String(req.body?.code || "").trim();
@@ -135,6 +138,112 @@ app.post("/api/auth-codes", (req, res) => {
   else globalThis.__uwuCodeOverrides[user] = code;
 
   return res.status(200).json({ ok: true, users: getEffectiveUsers() });
+});
+
+const CHAT_CHANNEL     = "uwuprx-chat";
+const PRESENCE_CHANNEL = "uwuprx-presence";
+
+app.post("/api/ai", async (req, res) => {
+  res.set(CORS);
+  const key = process.env.GROQ_API_KEY;
+  if (!key) return res.status(503).json({ error: "AI not configured — add GROQ_API_KEY to env vars" });
+
+  const messages = req.body?.messages;
+  if (!Array.isArray(messages)) return res.status(400).json({ error: "messages must be an array" });
+
+  try {
+    const upstream = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          { role: "system", content: "You are a chill, helpful AI assistant on uwu proxy. Be concise and friendly." },
+          ...messages,
+        ],
+        max_tokens: 1024,
+        temperature: 0.75,
+      }),
+    });
+    const data = await upstream.json();
+    return res.status(upstream.status).json(data);
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+app.get("/api/movies", async (req, res) => {
+  res.set(CORS);
+  const key = process.env.TMDB_API_KEY;
+  if (!key) return res.status(503).json({ error: "TMDB_API_KEY not set" });
+
+  const path  = req.query.path || "/movie/popular";
+  const query = new URLSearchParams({ ...req.query, api_key: key, language: "en-US" });
+  query.delete("path");
+
+  try {
+    const upstream = await fetch(`https://api.themoviedb.org/3${path}?${query}`);
+    const data     = await upstream.json();
+    return res.status(upstream.status).json(data);
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+app.post("/api/chat/send", async (req, res) => {
+  res.set(CORS);
+  const user = req.headers["x-chat-user"] || "anon";
+  const chunks = [];
+  for await (const chunk of req) chunks.push(chunk);
+  const body = Buffer.concat(chunks).toString();
+  if (!body.trim()) return res.status(400).json({ error: "empty message" });
+
+  try {
+    const upstream = await fetch(`https://ntfy.sh/${CHAT_CHANNEL}`, {
+      method: "POST",
+      headers: { "Title": user, "Content-Type": "text/plain" },
+      body,
+    });
+    return res.status(upstream.ok ? 200 : 502).end();
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+app.get("/api/chat/stream", async (req, res) => {
+  res.set({ ...CORS, "Content-Type": "text/event-stream", "Cache-Control": "no-cache", "X-Accel-Buffering": "no" });
+  try {
+    const upstream = await fetch(`https://ntfy.sh/${CHAT_CHANNEL}/sse`);
+    for await (const chunk of upstream.body) res.write(chunk);
+    res.end();
+  } catch { res.end(); }
+});
+
+app.post("/api/presence", async (req, res) => {
+  res.set(CORS);
+  const code = String(req.body?.code || "");
+  const match = getEffectiveUsers().find(u => u.code === code);
+  if (!match) return res.status(401).json({ error: "unauthorized" });
+
+  try {
+    await fetch(`https://ntfy.sh/${PRESENCE_CHANNEL}`, {
+      method: "POST",
+      headers: { "Title": match.user, "Content-Type": "text/plain" },
+      body: "online",
+    });
+    return res.status(200).end();
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+});
+
+app.get("/api/presence/stream", async (req, res) => {
+  res.set({ ...CORS, "Content-Type": "text/event-stream", "Cache-Control": "no-cache", "X-Accel-Buffering": "no" });
+  try {
+    const upstream = await fetch(`https://ntfy.sh/${PRESENCE_CHANNEL}/sse`);
+    for await (const chunk of upstream.body) res.write(chunk);
+    res.end();
+  } catch { res.end(); }
 });
 
 app.use(express.static(join(__dirname, "public")));

@@ -12,7 +12,10 @@ exports.handler = async (event) => {
   if (!key) return { statusCode: 503, headers: CORS, body: JSON.stringify({ error: "AI not configured — add GROQ_API_KEY to Netlify env vars" }) };
 
   let messages;
-  try { messages = JSON.parse(event.body).messages; } catch {
+  try {
+    messages = JSON.parse(event.body).messages;
+    if (!Array.isArray(messages)) throw new Error();
+  } catch {
     return { statusCode: 400, headers: CORS, body: JSON.stringify({ error: "bad request" }) };
   }
 
