@@ -254,9 +254,7 @@ function renderQuickGames() {
   if (!el) return;
   el.innerHTML = QUICK_GAMES.map(quickCard).join("");
   el.querySelectorAll(".card").forEach(c => c.addEventListener("click", () => {
-    if (c.dataset.local) window.location.href = c.dataset.url;
-    else if (c.dataset.direct) window.location.href = `/game-frame.html?url=${encodeURIComponent(c.dataset.url)}&name=${encodeURIComponent(c.dataset.name)}&direct=1`;
-    else navigate(c.dataset.url);
+    window.location.href = c.dataset.url;
   }));
 }
 
@@ -279,19 +277,13 @@ function renderGames(filter = "all") {
         <div class="game-desc">${escHtml(g.desc)}</div>
         <div class="game-footer">
           <div class="card-tag tag-${g.tag}">${g.tag}</div>
-          <button class="play-btn" ${(proxyReady || g.direct || g.local) ? "" : "disabled"}>play</button>
+          <button class="play-btn">play</button>
         </div>
       </div>
     </div>`).join("");
   grid.querySelectorAll(".game-card").forEach(card => {
     function openGame() {
-      if (card.dataset.local) {
-        window.location.href = card.dataset.url;
-      } else if (card.dataset.direct) {
-        window.location.href = `/game-frame.html?url=${encodeURIComponent(card.dataset.url)}&name=${encodeURIComponent(card.dataset.name)}&direct=1`;
-      } else {
-        navigate(card.dataset.url);
-      }
+      window.location.href = card.dataset.url;
     }
     card.querySelector(".play-btn")?.addEventListener("click", e => { e.stopPropagation(); openGame(); });
     card.addEventListener("click", openGame);
