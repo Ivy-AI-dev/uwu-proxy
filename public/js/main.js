@@ -166,9 +166,7 @@ const QUICK_GAMES = LOCAL_GAMES.slice(0, 6);
 const QUICK_APPS  = APPS.slice(0, 6);
 const GAMES_PATH_PREFIX = "/games/";
 const ALLOWED_LOCAL_GAME_PATHS = new Set(
-  LOCAL_GAMES
-    .map(g => g.url)
-    .filter(url => typeof url === "string" && url.startsWith(GAMES_PATH_PREFIX))
+  LOCAL_GAMES.map(g => g.url)
 );
 
 let proxyReady = false;
@@ -248,7 +246,7 @@ function renderRecent() {
 
 // ── Card renderers ───────────────────────
 function quickCard(item) {
-  return `<div class="card" data-url="${escHtml(item.url)}" data-name="${escHtml(item.name)}" data-direct="${item.direct ? "1" : ""}" data-local="${item.local ? "1" : ""}">
+  return `<div class="card" data-url="${escHtml(item.url)}" data-name="${escHtml(item.name)}">
     <div class="card-favicon"><img src="${escHtml(faviconUrl(item.url))}" alt="${escHtml(item.name)}" loading="lazy" onerror="this.style.opacity=0"/></div>
     <div class="card-name">${escHtml(item.name)}</div>
     <div class="card-desc">${escHtml(item.desc)}</div>
@@ -287,7 +285,7 @@ function renderGames(filter = "all") {
   if (!grid) return;
   const list = filter === "all" ? LOCAL_GAMES : LOCAL_GAMES.filter(g => g.category === filter);
   grid.innerHTML = list.map(g => `
-    <div class="game-card" data-url="${escHtml(g.url)}" data-name="${escHtml(g.name)}" data-direct="${g.direct ? "1" : ""}" data-local="${g.local ? "1" : ""}">
+    <div class="game-card" data-url="${escHtml(g.url)}" data-name="${escHtml(g.name)}">
       <div class="game-thumb"><img src="${escHtml(faviconUrl(g.url))}" alt="${escHtml(g.name)}" loading="lazy" onerror="this.style.opacity=0"/></div>
       <div class="game-info">
         <div class="game-name">${escHtml(g.name)}</div>
