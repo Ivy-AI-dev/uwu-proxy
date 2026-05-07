@@ -253,6 +253,7 @@ function renderQuickGames() {
   const el = document.getElementById("quick-games");
   if (!el) return;
   el.innerHTML = QUICK_GAMES.map(quickCard).join("");
+  // Game URLs are final launch URLs (local HTML files or direct hosted game pages).
   el.querySelectorAll(".card").forEach(c => c.addEventListener("click", () => {
     window.location.href = c.dataset.url;
   }));
@@ -283,6 +284,7 @@ function renderGames(filter = "all") {
     </div>`).join("");
   grid.querySelectorAll(".game-card").forEach(card => {
     function openGame() {
+      // Games no longer depend on proxy readiness; launch directly.
       window.location.href = card.dataset.url;
     }
     card.querySelector(".play-btn")?.addEventListener("click", e => { e.stopPropagation(); openGame(); });
