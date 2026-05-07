@@ -163,7 +163,20 @@ const APPS = [
 
 const QUICK_GAMES = GAMES.slice(0, 6);
 const QUICK_APPS  = APPS.slice(0, 6);
-const ALLOWED_GAME_URLS = new Set(GAMES.map(g => g.url));
+const ALLOWED_LOCAL_GAME_PATHS = new Set(
+  GAMES
+    .map(g => g.url)
+    .filter(url => typeof url === "string" && url.startsWith("/games/"))
+);
+const ALLOWED_EXTERNAL_GAME_URLS = new Set(
+  GAMES
+    .map(g => g.url)
+    .filter(url => typeof url === "string" && /^https?:\/\//i.test(url))
+    .map(url => {
+      try { return new URL(url).href; } catch { return null; }
+    })
+    .filter(Boolean)
+);
 
 let proxyReady = false;
 
@@ -253,12 +266,8 @@ function quickCard(item) {
 function openGameUrl(rawUrl) {
   const url = (rawUrl || "").trim();
   if (!url) return toast("Game URL is missing", "error");
-  if (!ALLOWED_GAME_URLS.has(url)) {
-    toast("Blocked unknown game URL", "error");
-    return;
-  }
   if (url.startsWith("/")) {
-    if (!url.startsWith("/games/")) {
+    if (!ALLOWED_LOCAL_GAME_PATHS.has(url)) {
       toast("Unsupported local game path", "error");
       return;
     }
@@ -269,11 +278,15 @@ function openGameUrl(rawUrl) {
   try {
     parsed = new URL(url);
   } catch {
-    toast("Unsupported game URL", "error");
+    toast("Invalid game URL format", "error");
     return;
   }
   if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-    toast("Unsupported game URL", "error");
+    toast("Game URL must use http or https", "error");
+    return;
+  }
+  if (!ALLOWED_EXTERNAL_GAME_URLS.has(parsed.href)) {
+    toast("Blocked unknown game URL", "error");
     return;
   }
   window.location.href = parsed.href;
