@@ -93,6 +93,11 @@
     .user-table tr:hover td{background:rgba(239,68,68,.03);}
     .user-name{font-weight:600;font-size:.88rem;}
     .code{font-family:'JetBrains Mono',monospace;letter-spacing:.12em;color:var(--accent);font-size:.88rem;}
+    .code-edit-wrap{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+    .code-input{width:92px;background:var(--bg3);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.78rem;padding:5px 7px;letter-spacing:.1em;outline:none;}
+    .code-input:focus{border-color:rgba(239,68,68,.45);}
+    .save-code-btn{padding:4px 8px;border-radius:4px;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.08);color:var(--accent);font-size:.65rem;cursor:pointer;font-family:'JetBrains Mono',monospace;}
+    .save-code-btn:hover{background:rgba(239,68,68,.18);}
     .role{display:inline-block;padding:2px 7px;border-radius:5px;font-size:.63rem;font-weight:700;letter-spacing:.04em;}
     .role-owner{background:rgba(245,158,11,.12);color:var(--yellow);}
     .role-slave-owner{background:rgba(239,68,68,.12);color:var(--accent);}
@@ -310,10 +315,12 @@
   const CHAT_CHANNEL     = "uwuprx-chat";
   const ANNOUNCE_CHANNEL = "uwuprx-announce";
   const ANNOUNCE_KEY     = "uwu_announces";
+  const CODE_OVERRIDES_KEY = "uwu_custom_codes";
 
   const session  = JSON.parse(localStorage.getItem("uwu_session") || "{}");
   const isOwner  = session.role === "owner";
   const canWhip  = session.role === "owner" || session.role === "slave owner";
+  const canManageCodes = canWhip;
 
   function escHtml(s) {
     return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
@@ -329,6 +336,24 @@
   document.getElementById("role-badge").textContent = session.role || "";
   document.getElementById("stat-users").textContent  = USERS.length;
   if (canWhip) document.getElementById("whip-col").textContent = "WHIP";
+
+  function getCodeOverrides() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(CODE_OVERRIDES_KEY) || "{}");
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function setCodeOverrides(next) {
+    localStorage.setItem(CODE_OVERRIDES_KEY, JSON.stringify(next));
+  }
+
+  function effectiveUsers() {
+    const overrides = getCodeOverrides();
+    return USERS.map(u => ({ ...u, code: String(overrides[u.user] || u.code) }));
+  }
 
   // ── Toast ──
   function showToast(msg, type = "default") {
@@ -389,27 +414,77 @@
     renderAnnounceHistory();
   })();
 
-  // ── User table ──
-  document.getElementById("users-tbody").innerHTML = USERS.map(u => {
-    const rc = u.role === "owner" ? "role-owner" : u.role === "slave owner" ? "role-slave-owner" : "role-slave";
-    const showWhip = canWhip && u.role === "slave" && u.user !== session.user;
-    return `<tr data-user="${escHtml(u.user)}">
-      <td><span class="user-name">${escHtml(u.user)}</span></td>
-      <td><span class="code">${escHtml(u.code)}</span></td>
-      <td><span class="role ${rc}">${escHtml(u.role)}</span></td>
-      <td><div class="status-cell"><span class="online-dot" id="odot-${escHtml(u.user)}"></span><span class="status-txt" id="otxt-${escHtml(u.user)}">offline</span></div></td>
-      <td><button class="copy-btn" data-code="${escHtml(u.code)}" data-name="${escHtml(u.user)}">copy</button></td>
-      <td>${showWhip ? `<button class="whip-btn" id="wb-${escHtml(u.user)}" data-user="${escHtml(u.user)}" data-code="${escHtml(u.code)}">WHIP</button>` : ""}</td>
-    </tr>`;
-  }).join("");
+  function renderUsersTable() {
+    const rows = effectiveUsers();
+    document.getElementById("users-tbody").innerHTML = rows.map(u => {
+      const rc = u.role === "owner" ? "role-owner" : u.role === "slave owner" ? "role-slave-owner" : "role-slave";
+      const showWhip = canWhip && u.role === "slave" && u.user !== session.user;
+      const codeCell = canManageCodes
+        ? `<div class="code-edit-wrap">
+            <input class="code-input" data-user="${escHtml(u.user)}" value="${escHtml(u.code)}" maxlength="5" inputmode="numeric" pattern="[0-9]*"/>
+            <button class="save-code-btn" data-user="${escHtml(u.user)}">save</button>
+          </div>`
+        : `<span class="code">${escHtml(u.code)}</span>`;
+      return `<tr data-user="${escHtml(u.user)}">
+        <td><span class="user-name">${escHtml(u.user)}</span></td>
+        <td>${codeCell}</td>
+        <td><span class="role ${rc}">${escHtml(u.role)}</span></td>
+        <td><div class="status-cell"><span class="online-dot" id="odot-${escHtml(u.user)}"></span><span class="status-txt" id="otxt-${escHtml(u.user)}">offline</span></div></td>
+        <td><button class="copy-btn" data-code="${escHtml(u.code)}" data-name="${escHtml(u.user)}">copy</button></td>
+        <td>${showWhip ? `<button class="whip-btn" id="wb-${escHtml(u.user)}" data-user="${escHtml(u.user)}" data-code="${escHtml(u.code)}">WHIP</button>` : ""}</td>
+      </tr>`;
+    }).join("");
 
-  document.querySelectorAll(".copy-btn").forEach(btn => btn.addEventListener("click", () => {
-    navigator.clipboard.writeText(btn.dataset.code).then(() => {
-      showToast(`copied ${btn.dataset.name}'s code`, "success");
-      addLog("📋", `copied ${btn.dataset.name}'s code`, "green");
+    document.querySelectorAll(".copy-btn").forEach(btn => btn.addEventListener("click", () => {
+      navigator.clipboard.writeText(btn.dataset.code).then(() => {
+        showToast(`copied ${btn.dataset.name}'s code`, "success");
+        addLog("📋", `copied ${btn.dataset.name}'s code`, "green");
+      });
+    }));
+    document.querySelectorAll(".whip-btn").forEach(btn => btn.addEventListener("click", () => whip(btn.dataset.user, btn.dataset.code, btn)));
+
+    document.querySelectorAll(".code-input").forEach(inp => {
+      inp.addEventListener("input", () => { inp.value = inp.value.replace(/\D/g, "").slice(0, 5); });
+      inp.addEventListener("keydown", e => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          inp.closest("td")?.querySelector(".save-code-btn")?.click();
+        }
+      });
     });
-  }));
-  document.querySelectorAll(".whip-btn").forEach(btn => btn.addEventListener("click", () => whip(btn.dataset.user, btn.dataset.code, btn)));
+    document.querySelectorAll(".save-code-btn").forEach(btn => btn.addEventListener("click", () => saveCustomCode(btn.dataset.user)));
+  }
+
+  function saveCustomCode(user) {
+    if (!canManageCodes || !user) return;
+    const input = document.querySelector(`.code-input[data-user="${user}"]`);
+    if (!input) return;
+    const newCode = String(input.value || "").trim();
+    if (!/^\d{5}$/.test(newCode)) {
+      showToast("codes must be exactly 5 digits", "error");
+      return;
+    }
+
+    const rows = effectiveUsers();
+    if (rows.some(u => u.user !== user && u.code === newCode)) {
+      showToast("that code is already used", "error");
+      return;
+    }
+
+    const defaultsByUser = Object.fromEntries(USERS.map(u => [u.user, u.code]));
+    const overrides = getCodeOverrides();
+    if (newCode === defaultsByUser[user]) {
+      delete overrides[user];
+    } else {
+      overrides[user] = newCode;
+    }
+    setCodeOverrides(overrides);
+    renderUsersTable();
+    showToast(`saved new code for ${user}`, "success");
+    addLog("🔐", `updated ${user}'s login code`, "yellow");
+  }
+
+  renderUsersTable();
 
   async function whip(name, code, btn) {
     btn.disabled = true;

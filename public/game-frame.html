@@ -18,7 +18,7 @@
 <body>
   <button class="back" onclick="history.back()">← back</button>
   <div id="gf-loading">loading game…</div>
-  <iframe id="gf" allowfullscreen allow="fullscreen; autoplay; gamepad; clipboard-write"></iframe>
+  <iframe id="gf" allowfullscreen allow="fullscreen; autoplay; gamepad; clipboard-write" sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-downloads allow-modals"></iframe>
   <script type="module">
     const p = new URLSearchParams(location.search);
     const u = p.get("url");
@@ -30,7 +30,7 @@
 
     let parsed;
     try {
-      parsed = new URL(u);
+      parsed = new URL(u, location.origin);
       if (parsed.protocol !== "https:" && parsed.protocol !== "http:") throw new Error("bad protocol");
     } catch {
       location.replace("/games.html");
@@ -41,20 +41,24 @@
 
     // Always prefer the UV route so iframe-blocking headers are stripped reliably.
     // If the worker cannot start (e.g. local non-HTTPS dev), fall back to direct.
-    import("/uv/uv.bundle.js").then(() => import("/uv/uv.config.js")).then(async () => {
-      try {
-        const reg = await navigator.serviceWorker.register("/uv/sw.js", {
-          scope: __uv$config.prefix,
-          updateViaCache: "none",
-        });
-        if (reg.installing || reg.waiting) {
-          await navigator.serviceWorker.ready;
+    if (parsed.origin === location.origin) {
+      frame.src = parsed.href;
+    } else {
+      import("/uv/uv.bundle.js").then(() => import("/uv/uv.config.js")).then(async () => {
+        try {
+          const reg = await navigator.serviceWorker.register("/uv/sw.js", {
+            scope: __uv$config.prefix,
+            updateViaCache: "none",
+          });
+          if (reg.installing || reg.waiting) {
+            await navigator.serviceWorker.ready;
+          }
+          frame.src = __uv$config.prefix + __uv$config.encodeUrl(parsed.href);
+        } catch {
+          frame.src = parsed.href;
         }
-        frame.src = __uv$config.prefix + __uv$config.encodeUrl(parsed.href);
-      } catch {
-        frame.src = parsed.href;
-      }
-    });
+      });
+    }
 
     frame.addEventListener("load",  () => loader.classList.add("hidden"), { once: true });
     frame.addEventListener("error", () => loader.classList.add("hidden"), { once: true });

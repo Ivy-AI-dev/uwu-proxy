@@ -249,15 +249,19 @@ function quickCard(item) {
   </div>`;
 }
 
+function gameFrameUrl(url, name) {
+  return `/game-frame.html?url=${encodeURIComponent(url)}&name=${encodeURIComponent(name || "")}`;
+}
+
 function renderQuickGames() {
   const el = document.getElementById("quick-games");
   if (!el) return;
   el.innerHTML = QUICK_GAMES.map(quickCard).join("");
-  // Game URLs are final launch URLs (local HTML files or direct hosted game pages).
   el.querySelectorAll(".card").forEach(c => c.addEventListener("click", () => {
     const target = (c.dataset.url || "").trim();
+    const name = (c.dataset.name || "").trim();
     if (!target) return toast("Game URL is missing", "error");
-    window.location.href = target;
+    window.location.href = gameFrameUrl(target, name);
   }));
 }
 
@@ -286,10 +290,10 @@ function renderGames(filter = "all") {
     </div>`).join("");
   grid.querySelectorAll(".game-card").forEach(card => {
     function openGame() {
-      // Games no longer depend on proxy readiness; launch directly.
       const target = (card.dataset.url || "").trim();
+      const name = (card.dataset.name || "").trim();
       if (!target) return toast("Game URL is missing", "error");
-      window.location.href = target;
+      window.location.href = gameFrameUrl(target, name);
     }
     card.querySelector(".play-btn")?.addEventListener("click", e => { e.stopPropagation(); openGame(); });
     card.addEventListener("click", openGame);

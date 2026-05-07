@@ -148,6 +148,16 @@
   const form   = document.getElementById("login-form");
   const success= document.getElementById("success-view");
   const nameEl = document.getElementById("welcome-name");
+  const CODE_OVERRIDES_KEY = "uwu_custom_codes";
+  const DEFAULT_USERS = [
+    { user: "Ryder", role: "owner", code: "82047" },
+    { user: "Logan", role: "slave owner", code: "63914" },
+    { user: "Beckham", role: "slave", code: "39571" },
+    { user: "Kolby", role: "slave", code: "74286" },
+    { user: "Levi", role: "slave", code: "51839" },
+    { user: "Liam", role: "slave", code: "26473" },
+    { user: "Gibson", role: "slave", code: "98132" },
+  ];
 
   // If already logged in, skip
   try {
@@ -211,19 +221,35 @@
     if (code.length === 5) setTimeout(() => btn.click(), 80);
   }
 
+  function getCustomAuthMatch(code) {
+    try {
+      const overrides = JSON.parse(localStorage.getItem(CODE_OVERRIDES_KEY) || "{}");
+      const byUser = overrides && typeof overrides === "object" ? overrides : {};
+      const rows = DEFAULT_USERS.map(u => ({ ...u, code: String(byUser[u.user] || u.code) }));
+      const hit = rows.find(u => u.code === code);
+      if (!hit) return null;
+      return { user: hit.user, role: hit.role, channel: `uwuprx-${hit.code}` };
+    } catch {
+      return null;
+    }
+  }
+
   btn.addEventListener("click", async () => {
     const code = [...boxes].map(b => b.value).join("");
     if (code.length < 5) return;
     btn.disabled = true;
     errEl.textContent = "";
     try {
-      const res  = await fetch("/api/auth", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ code }),
-      });
-      const data = await res.json();
-      if (!res.ok) { errEl.textContent = "wrong code. try again."; boxes.forEach(b => b.value = ""); boxes[0].focus(); btn.disabled = true; return; }
+      let data = getCustomAuthMatch(code);
+      if (!data) {
+        const res  = await fetch("/api/auth", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ code }),
+        });
+        data = await res.json();
+        if (!res.ok) { errEl.textContent = "wrong code. try again."; boxes.forEach(b => b.value = ""); boxes[0].focus(); btn.disabled = true; return; }
+      }
       localStorage.setItem("uwu_session", JSON.stringify({ ...data, loginTime: Date.now() }));
       nameEl.textContent = data.user;
       form.style.display = "none";
