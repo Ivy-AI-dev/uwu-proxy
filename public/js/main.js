@@ -253,6 +253,10 @@ function openGameUrl(rawUrl) {
   const url = (rawUrl || "").trim();
   if (!url) return toast("Game URL is missing", "error");
   if (url.startsWith("/")) {
+    if (!url.startsWith("/games/")) {
+      toast("Unsupported local game path", "error");
+      return;
+    }
     window.location.href = url;
     return;
   }
