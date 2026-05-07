@@ -163,10 +163,11 @@ const APPS = [
 
 const QUICK_GAMES = GAMES.slice(0, 6);
 const QUICK_APPS  = APPS.slice(0, 6);
+const GAMES_PATH_PREFIX = "/games/";
 const ALLOWED_LOCAL_GAME_PATHS = new Set(
   GAMES
     .map(g => g.url)
-    .filter(url => typeof url === "string" && url.startsWith("/games/"))
+    .filter(url => typeof url === "string" && url.startsWith(GAMES_PATH_PREFIX))
 );
 const ALLOWED_EXTERNAL_GAME_URLS = new Set(
   GAMES
@@ -266,14 +267,11 @@ function quickCard(item) {
 function openGameUrl(rawUrl) {
   const url = (rawUrl || "").trim();
   if (!url) return toast("Game URL is missing", "error");
-  if (url.startsWith("/")) {
-    if (!ALLOWED_LOCAL_GAME_PATHS.has(url)) {
-      toast("Unsupported local game path", "error");
-      return;
-    }
+  if (ALLOWED_LOCAL_GAME_PATHS.has(url)) {
     window.location.href = url;
     return;
   }
+  if (url.startsWith("/")) return toast("Unsupported local game path", "error");
   let parsed;
   try {
     parsed = new URL(url);
