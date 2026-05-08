@@ -48,8 +48,6 @@ const GAMES = [
   { name: "Drift Hunters",      url: "https://3kh0.github.io/projects/drift-hunters/index.html",      tag: "action",  category: "action",  desc: "Tune cars and drift for points",       direct: true  },
   { name: "Toss the Turtle",    url: "https://3kh0.github.io/projects/toss-the-turtle/index.html",    tag: "action",  category: "action",  desc: "Launch a turtle as far as possible",   direct: true  },
   { name: "Learn to Fly 3",     url: "https://3kh0.github.io/projects/learn-to-fly-3/index.html",     tag: "action",  category: "action",  desc: "Launch a penguin into the sky",        direct: true  },
-  { name: "Rolling Sky",        url: "/games/Rolling-sky.html",                                       tag: "action",  category: "action",  desc: "Roll a ball across sky platforms",     local: true   },
-  { name: "The Backrooms",      url: "/games/backrooms.html",                                         tag: "action",  category: "action",  desc: "Escape the endless liminal rooms",     local: true   },
   // IO
   { name: "Paper.io 2",         url: "https://3kh0.github.io/projects/paperio2/index.html",           tag: "io",      category: "io",      desc: "Claim territory on the map",           direct: true  },
   { name: "Boxing Random",      url: "https://3kh0.github.io/projects/boxing-random/index.html",      tag: "io",      category: "io",      desc: "Random boxing mayhem",                 direct: true  },
@@ -99,7 +97,6 @@ const GAMES = [
   { name: "Crossy Road",        url: "https://3kh0.github.io/projects/crossy-road/index.html",        tag: "puzzle",  category: "puzzle",  desc: "Hop across endless roads",             direct: true  },
   { name: "2048",               url: "https://gabrielecirulli.github.io/2048/",                       tag: "puzzle",  category: "puzzle",  desc: "Slide tiles to reach 2048",            direct: true  },
   { name: "Bloxorz",           url: "https://3kh0.github.io/projects/bloxorz/index.html",            tag: "puzzle",  category: "puzzle",  desc: "Roll a block to the goal",             direct: true  },
-  { name: "Tower Defense",     url: "/games/Tower-defense.html",                                      tag: "puzzle",  category: "puzzle",  desc: "Build towers, stop the enemies",       local: true   },
   { name: "Sandboxels",         url: "https://3kh0.github.io/projects/sandboxels/index.html",         tag: "puzzle",  category: "puzzle",  desc: "Mix elements in a physics sandbox",    direct: true  },
   { name: "Solitaire",          url: "https://3kh0.github.io/projects/solitaire/index.html",          tag: "puzzle",  category: "puzzle",  desc: "Classic card game",                    direct: true  },
   { name: "Sand Game",          url: "https://3kh0.github.io/projects/sand-game/index.html",          tag: "puzzle",  category: "puzzle",  desc: "Simulate falling sand physics",        direct: true  },
