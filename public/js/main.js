@@ -4,76 +4,89 @@
 const VERSION = "1.1.0";
 
 // ── Data ────────────────────────────────
-const GAMES = [
-  // Action — all self-hosted
-  { name: "Slope",              url: "/games/slope/index.html",              tag: "action",  category: "action",  desc: "Roll a ball down an endless slope",        local: true },
-  { name: "Tunnel Rush",        url: "/games/tunnel-rush/index.html",        tag: "action",  category: "action",  desc: "Race through colorful tunnels",            local: true },
-  { name: "MotoX3M",            url: "/games/motox3m/index.html",            tag: "action",  category: "action",  desc: "Extreme motocross stunts",                 local: true },
-  { name: "Vex 5",              url: "/games/vex5/index.html",               tag: "action",  category: "action",  desc: "Stick figure platformer",                  local: true },
-  { name: "Vex 4",              url: "/games/vex4/index.html",               tag: "action",  category: "action",  desc: "Stick platformer with new traps",          local: true },
-  { name: "Vex 3",              url: "/games/vex3/index.html",               tag: "action",  category: "action",  desc: "Challenging stick platformer",             local: true },
-  { name: "Vex 6",              url: "/games/vex6/index.html",               tag: "action",  category: "action",  desc: "Stickman obstacle course",                 local: true },
-  { name: "Rooftop Snipers",    url: "/games/rooftop-snipers/index.html",    tag: "action",  category: "action",  desc: "2-player rooftop battle",                  local: true },
-  { name: "Temple Run 2",       url: "/games/temple-run-2/index.html",       tag: "action",  category: "action",  desc: "Classic endless runner",                   local: true },
-  { name: "Flappy Bird",        url: "/games/flappy-bird/index.html",        tag: "action",  category: "action",  desc: "Tap to fly through pipes",                 local: true },
-  { name: "Geometry Dash",      url: "/games/geodash/index.html",            tag: "action",  category: "action",  desc: "Rhythm-based platformer",                  local: true },
-  { name: "Doodle Jump",        url: "/games/doodle-jump/index.html",        tag: "action",  category: "action",  desc: "Jump your way to the top",                 local: true },
-  { name: "Basketball Stars",   url: "/games/basketball-stars/index.html",   tag: "action",  category: "action",  desc: "1v1 basketball battles",                   local: true },
-  { name: "Subway Surfers",     url: "/games/subway-surfers/index.html",     tag: "action",  category: "action",  desc: "Endless subway runner",                    local: true },
-  { name: "Death Run 3D",       url: "/games/death-run-3d/index.html",       tag: "action",  category: "action",  desc: "Dodge obstacles in 3D",                    local: true },
-  { name: "Ninja",              url: "/games/ninja/index.html",              tag: "action",  category: "action",  desc: "Classic N ninja game",                     local: true },
-  { name: "Tanuki Sunset",      url: "/games/tanuki-sunset/index.html",      tag: "action",  category: "action",  desc: "Chill longboard downhill ride",            local: true },
-  { name: "Madalin Stunt Cars 2", url: "/games/madalin-stunt-cars-2/index.html", tag: "action", category: "action", desc: "Open-world stunt driving",               local: true },
-  { name: "MotoX3M Pool Party", url: "/games/motox3m-pool/index.html",       tag: "action",  category: "action",  desc: "Poolside moto stunts",                     local: true },
-  { name: "MotoX3M Spooky Land", url: "/games/motox3m-spooky/index.html",    tag: "action",  category: "action",  desc: "Halloween moto madness",                   local: true },
-  { name: "MotoX3M Winter",     url: "/games/motox3m-winter/index.html",     tag: "action",  category: "action",  desc: "Snow and ice motocross",                   local: true },
-  { name: "Stick War",          url: "/games/stickwar/index.html",           tag: "action",  category: "action",  desc: "Build an army of stickmen",                local: true },
-  // IO
-  { name: "Paper.io 2",         url: "/games/paperio2/index.html",           tag: "io",      category: "io",      desc: "Claim territory on the map",               local: true },
-  { name: "Among Us",           url: "/games/among-us/index.html",           tag: "io",      category: "io",      desc: "Find the impostor among your crew",        local: true },
-  { name: "Smash Karts",        url: "/games/smashkarts/index.html",         tag: "io",      category: "io",      desc: "Kart battle royale",                       local: true },
-  { name: "Snow Battle",        url: "/games/snowbattle/index.html",         tag: "io",      category: "io",      desc: "Multiplayer snowball fight",                local: true },
-  { name: "Tube Jumpers",       url: "/games/tube-jumpers/index.html",       tag: "io",      category: "io",      desc: "Jump tubes to knock off opponents",        local: true },
-  // Classic
-  { name: "Minecraft (Eaglercraft)", url: "/games/minecraft/index.html",     tag: "classic", category: "classic", desc: "Full Minecraft browser edition",           local: true },
-  { name: "Minecraft Classic",  url: "/games/minecraft-classic/index.html",  tag: "classic", category: "classic", desc: "Classic Minecraft in browser",             local: true },
-  { name: "Google Snake",       url: "/games/google-snake/index.html",       tag: "classic", category: "classic", desc: "Classic snake game",                       local: true },
-  { name: "Tetris",             url: "/games/tetris/index.html",             tag: "classic", category: "classic", desc: "Classic block-stacking game",              local: true },
-  { name: "Duck Life 2",        url: "/games/ducklife2/index.html",          tag: "classic", category: "classic", desc: "Duck racing sequel",                       local: true },
-  { name: "Duck Life 3",        url: "/games/ducklife3/index.html",          tag: "classic", category: "classic", desc: "Duck evolution adventure",                 local: true },
-  { name: "Duck Life 4",        url: "/games/ducklife4/index.html",          tag: "classic", category: "classic", desc: "Duck battle tournament",                   local: true },
-  { name: "Tank Trouble",       url: "/games/tank-trouble-2/index.html",     tag: "classic", category: "classic", desc: "Tank maze battle",                         local: true },
-  { name: "The World's Hardest Game", url: "/games/worlds-hardest-game/index.html", tag: "classic", category: "classic", desc: "Brutally hard skill game",       local: true },
-  { name: "World's Hardest Game 2", url: "/games/worlds-hardest-game-2/index.html", tag: "classic", category: "classic", desc: "Even harder sequel",              local: true },
-  { name: "Learn to Fly",       url: "/games/learntofly/index.html",         tag: "classic", category: "classic", desc: "Launch a penguin into the sky",            local: true },
-  { name: "Wolfenstein 3D",     url: "/games/wolf3d/index.html",             tag: "classic", category: "classic", desc: "Classic 3D first-person shooter",          local: true },
-  { name: "FNAF 1",             url: "/games/fnaf1.html",                    tag: "classic", category: "classic", desc: "Five Nights at Freddy's original",         local: true },
-  { name: "FNAF 2",             url: "/games/fnaf2.html",                    tag: "classic", category: "classic", desc: "Five Nights at Freddy's 2",                local: true },
-  { name: "FNAF 3",             url: "/games/fnaf3.html",                    tag: "classic", category: "classic", desc: "Five Nights at Freddy's 3",                local: true },
-  { name: "FNAF 4",             url: "/games/fnaf4.html",                    tag: "classic", category: "classic", desc: "Five Nights at Freddy's 4",                local: true },
-  { name: "FNAF Sister Location", url: "/games/sister-location.html",        tag: "classic", category: "classic", desc: "Five Nights at Freddy's Sister Location",  local: true },
-  { name: "Minecraft Tower Defense", url: "/games/Minecraft-tower-defense.html", tag: "classic", category: "classic", desc: "Defend your Minecraft base",          local: true },
-  // Puzzle
-  { name: "Wordle",             url: "/games/wordle/index.html",             tag: "puzzle",  category: "puzzle",  desc: "Guess the 5-letter word",                  local: true },
-  { name: "Minesweeper",        url: "/games/minesweeper/index.html",        tag: "puzzle",  category: "puzzle",  desc: "Clear the minefield",                      local: true },
-  { name: "Cut the Rope",       url: "/games/ctr/index.html",                tag: "puzzle",  category: "puzzle",  desc: "Feed candy to the monster",                local: true },
-  { name: "Solitaire",          url: "/games/solitaire/index.html",          tag: "puzzle",  category: "puzzle",  desc: "Classic card game",                        local: true },
-  { name: "Sand Game",          url: "/games/sand-game/index.html",          tag: "puzzle",  category: "puzzle",  desc: "Simulate falling sand physics",            local: true },
-  { name: "There Is No Game",   url: "/games/there-is-no-game/index.html",   tag: "puzzle",  category: "puzzle",  desc: "A game that isn't a game",                 local: true },
-  // Casual
-  { name: "Retro Bowl",         url: "/games/retro-bowl/index.html",         tag: "casual",  category: "casual",  desc: "Lead your team to the championship",       local: true },
-  { name: "Cookie Clicker",     url: "/games/cookie-clicker/index.html",     tag: "casual",  category: "casual",  desc: "Click cookies, build an empire",           local: true },
-  { name: "Idle Breakout",      url: "/games/idle-breakout/index.html",      tag: "casual",  category: "casual",  desc: "Idle ball-breaking fun",                   local: true },
-  { name: "Idle Shark",         url: "/games/idle-shark/index.html",         tag: "casual",  category: "casual",  desc: "Grow a massive shark empire",              local: true },
-  { name: "Papa's Pizzeria",    url: "/games/papaspizzaria/index.html",      tag: "casual",  category: "casual",  desc: "Craft perfect pizzas",                     local: true },
-  { name: "Chrome Dino",        url: "/games/chrome-dino/index.html",        tag: "casual",  category: "casual",  desc: "The classic offline dino runner",          local: true },
-  { name: "Rolly Vortex",       url: "/games/rolly-vortex/index.html",       tag: "casual",  category: "casual",  desc: "Roll through the vortex tunnel",           local: true },
-  { name: "Superhot",           url: "/games/superhot/index.html",           tag: "casual",  category: "casual",  desc: "Time moves when you move",                 local: true },
-  { name: "Grindcraft",         url: "/games/grindcraft/index.html",         tag: "casual",  category: "casual",  desc: "Minecraft-style idle crafting",            local: true },
-  { name: "Hacker Typer",       url: "/games/hackertype/index.html",         tag: "casual",  category: "casual",  desc: "Look like a movie hacker",                 local: true },
-  { name: "Sort the Court",     url: "/games/sort-the-court/index.html",     tag: "casual",  category: "casual",  desc: "Rule your kingdom with yes or no",         local: true },
-  { name: "Townscaper",         url: "/games/townscaper/index.html",         tag: "casual",  category: "casual",  desc: "Build colorful island towns",              local: true },
-];
+const GAMES = [];
+const EXTERNAL_GAMES_REPO_API = "https://api.github.com/repos/tw31122007/HTML-Games-V2/contents";
+const EXTERNAL_GAMES_BASE_URL = "https://tw31122007.github.io/HTML-Games-V2";
+const EXTERNAL_GAMES_IGNORED_DIRS = new Set([".github", ".git", "assets", "static", "css", "js", "images", "img"]);
+const EXTERNAL_GAMES_CACHE_KEY = "html_games_v2_cache";
+const EXTERNAL_GAMES_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+
+function formatExternalGameName(slug) {
+  return String(slug || "")
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (m) => m.toUpperCase());
+}
+
+function readExternalGamesCache() {
+  try {
+    const raw = localStorage.getItem(EXTERNAL_GAMES_CACHE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.slugs) || !parsed.savedAt) return [];
+    if (Date.now() - Number(parsed.savedAt) > EXTERNAL_GAMES_CACHE_TTL_MS) return [];
+    return parsed.slugs.filter((s) => typeof s === "string" && s.trim());
+  } catch {
+    return [];
+  }
+}
+
+function writeExternalGamesCache(slugs) {
+  try {
+    localStorage.setItem(EXTERNAL_GAMES_CACHE_KEY, JSON.stringify({
+      savedAt: Date.now(),
+      slugs,
+    }));
+  } catch {}
+}
+
+async function loadExternalRepoGames() {
+  const retainedCustom = GAMES.filter((g) => g?.custom === true);
+  try {
+    let slugs = readExternalGamesCache();
+    if (!slugs.length) {
+      const res = await fetch(EXTERNAL_GAMES_REPO_API);
+      if (!res.ok) throw new Error(`games source request failed for ${EXTERNAL_GAMES_REPO_API} (${res.status})`);
+      const data = await res.json();
+      if (!Array.isArray(data)) throw new Error("invalid games source response");
+      slugs = data
+        .filter((item) => item?.type === "dir")
+        .map((item) => String(item?.name || "").trim())
+        .filter((name) => name && !EXTERNAL_GAMES_IGNORED_DIRS.has(name.toLowerCase()))
+        .sort((a, b) => a.localeCompare(b));
+      writeExternalGamesCache(slugs);
+    }
+
+    const externalGames = slugs
+      .map((slug) => ({
+        name: formatExternalGameName(slug),
+        url: `${EXTERNAL_GAMES_BASE_URL}/${encodeURIComponent(slug)}/`,
+        tag: "casual",
+        category: "casual",
+        desc: "From HTML-Games-V2 collection",
+        local: false,
+      }));
+
+    GAMES.length = 0;
+    GAMES.push(...externalGames, ...retainedCustom);
+  } catch (error) {
+    console.warn("Failed to load HTML-Games-V2 list", error);
+    GAMES.length = 0;
+    GAMES.push(
+      {
+        name: "HTML Games V2",
+        url: `${EXTERNAL_GAMES_BASE_URL}/`,
+        tag: "casual",
+        category: "casual",
+        desc: "Open the HTML-Games-V2 collection",
+        local: false,
+      },
+      ...retainedCustom,
+    );
+  }
+  rebuildGameCollections();
+}
 
 const APPS = [
   { name: "YouTube",     url: "https://youtube.com/",           tag: "media",        category: "media",       desc: "Watch & stream videos",       bg: "#ff0000" },
@@ -825,6 +838,7 @@ function initPresence() {
 // ── Boot ─────────────────────────────────
 (async () => {
   rebuildGameCollections();
+  await loadExternalRepoGames();
   await loadCustomGames();
   injectSidebar();
   loadTheme();
