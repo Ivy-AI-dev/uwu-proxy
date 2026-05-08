@@ -677,7 +677,6 @@
     const slugEl = document.getElementById("game-slug");
     slugEl?.addEventListener("input", () => { slugEl.dataset.manual = "1"; });
     document.getElementById("game-name")?.addEventListener("input", (e) => {
-      const slugEl = document.getElementById("game-slug");
       if (!slugEl) return;
       if (slugEl.dataset.manual === "1") return;
       slugEl.value = slugify(e.target.value);

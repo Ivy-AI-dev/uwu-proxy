@@ -9,7 +9,7 @@ const DEFAULT_USERS = [
 ];
 
 const STORE_NAME = "uwu-proxy";
-const MAX_GAME_HTML_BYTES = 500_000;
+const MAX_GAME_HTML_SIZE_BYTES = 500_000; // 500KB
 const KEYS = {
   codeOverrides: "auth-code-overrides",
   gameIndex: "custom-games-index",
@@ -186,7 +186,7 @@ async function saveCustomGame({ event, actor, payload }) {
     return { ok: false, status: 400, error: "slug, name, and html are required" };
   }
   const htmlBytes = Buffer.byteLength(html, "utf8");
-  if (htmlBytes > MAX_GAME_HTML_BYTES) {
+  if (htmlBytes > MAX_GAME_HTML_SIZE_BYTES) {
     return { ok: false, status: 413, error: "html too large (max 500KB)" };
   }
 

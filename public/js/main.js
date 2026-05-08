@@ -200,7 +200,9 @@ async function loadCustomGames() {
         custom: true,
       });
     });
-  } catch {}
+  } catch (error) {
+    console.warn("Failed to load custom games", error);
+  }
   rebuildGameCollections();
 }
 
