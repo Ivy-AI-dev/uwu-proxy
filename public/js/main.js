@@ -162,14 +162,49 @@ const APPS = [
 ];
 
 const GAMES_PATH_PREFIX = "/games/";
-const LOCAL_GAMES = GAMES.filter(g => typeof g.url === "string" && g.url && g.url.startsWith(GAMES_PATH_PREFIX));
-const QUICK_GAMES = LOCAL_GAMES.slice(0, 6);
+const CUSTOM_GAMES_ENDPOINT = "/api/games";
+let LOCAL_GAMES = [];
+let QUICK_GAMES = [];
 const QUICK_APPS  = APPS.slice(0, 6);
-const ALLOWED_LOCAL_GAME_PATHS = new Set(
-  LOCAL_GAMES.map(g => g.url)
-);
+const ALLOWED_LOCAL_GAME_PATHS = new Set();
 
 let proxyReady = false;
+
+function rebuildGameCollections() {
+  LOCAL_GAMES = GAMES.filter(g => typeof g.url === "string" && g.url && g.url.startsWith(GAMES_PATH_PREFIX));
+  QUICK_GAMES = LOCAL_GAMES.slice(0, 6);
+  ALLOWED_LOCAL_GAME_PATHS.clear();
+  LOCAL_GAMES.forEach(g => ALLOWED_LOCAL_GAME_PATHS.add(g.url));
+}
+
+async function loadCustomGames() {
+  try {
+    const res = await fetch(CUSTOM_GAMES_ENDPOINT);
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!Array.isArray(data?.games)) return;
+    const retained = GAMES.filter(g => g?.custom !== true);
+    GAMES.length = 0;
+    GAMES.push(...retained);
+    data.games.forEach((g) => {
+      const slug = String(g?.slug || "").trim();
+      const name = String(g?.name || "").trim();
+      if (!slug || !name) return;
+      GAMES.push({
+        name,
+        url: `/games/custom/${encodeURIComponent(slug)}`,
+        tag: g.category || "casual",
+        category: g.category || "casual",
+        desc: String(g?.desc || "owner-uploaded game"),
+        local: true,
+        custom: true,
+      });
+    });
+  } catch (error) {
+    console.warn("Failed to load custom games", error);
+  }
+  rebuildGameCollections();
+}
 
 // ── Proxy init ───────────────────────────
 async function initProxy() {
@@ -189,6 +224,57 @@ function setProxyStatus(state, text) {
   if (!el || !txt) return;
   el.className    = "proxy-badge " + state;
   txt.textContent = text;
+}
+
+function normalizePagePath(pathname) {
+  if (!pathname || pathname === "/index.html") return "/";
+  return pathname;
+}
+
+function sidebarButton(path, title, icon) {
+  const active = normalizePagePath(location.pathname) === normalizePagePath(path) ? " active" : "";
+  return `<a href="${path}" class="sb-btn${active}" title="${title}">${icon}</a>`;
+}
+
+function injectSidebar() {
+  if (document.querySelector(".sidebar")) {
+    const session = JSON.parse(localStorage.getItem("uwu_session") || "{}");
+    const userBadge = document.getElementById("sb-user");
+    if (userBadge && session.user) userBadge.textContent = session.user.charAt(0).toUpperCase();
+    document.getElementById("logout-btn")?.addEventListener("click", () => {
+      localStorage.removeItem("uwu_session");
+      location.replace("/login.html");
+    });
+    return;
+  }
+
+  const nav = document.createElement("nav");
+  nav.className = "sidebar";
+  nav.innerHTML = `
+    <a href="/" class="sb-logo" title="uwu proxy">
+      <svg width="20" height="16" viewBox="0 0 20 16" fill="none"><circle cx="6" cy="7" r="3" fill="white"/><circle cx="14" cy="7" r="3" fill="white"/><path d="M5 12 Q10 15.5 15 12" stroke="white" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </a>
+    ${sidebarButton("/", "Home", '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>')}
+    ${sidebarButton("/games.html", "Games", '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4m-2-2v4"/><circle cx="17" cy="11" r="1" fill="currentColor"/><circle cx="15" cy="13" r="1" fill="currentColor"/></svg>')}
+    ${sidebarButton("/apps.html", "Apps", '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>')}
+    ${sidebarButton("/chat.html", "Chat", '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>')}
+    ${sidebarButton("/ai.html", "AI", '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M22 2 12 12"/><path d="m17 7 5-5"/></svg>')}
+    ${sidebarButton("/music.html", "Music", '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>')}
+    <div class="sb-spacer"></div>
+    <div class="sb-user" id="sb-user">?</div>
+    <button class="sb-logout" id="logout-btn" title="Logout">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    </button>
+  `;
+  document.body.prepend(nav);
+
+  const session = JSON.parse(localStorage.getItem("uwu_session") || "{}");
+  const userBadge = document.getElementById("sb-user");
+  if (userBadge && session.user) userBadge.textContent = session.user.charAt(0).toUpperCase();
+  document.getElementById("logout-btn")?.addEventListener("click", () => {
+    localStorage.removeItem("uwu_session");
+    location.replace("/login.html");
+  });
 }
 
 // ── Navigation ───────────────────────────
@@ -789,6 +875,9 @@ function initPresence() {
 
 // ── Boot ─────────────────────────────────
 (async () => {
+  rebuildGameCollections();
+  await loadCustomGames();
+  injectSidebar();
   loadTheme();
   loadCloak();
   showVersion();

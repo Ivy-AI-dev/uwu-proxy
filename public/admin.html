@@ -85,6 +85,22 @@
     .announce-item-meta{font-size:.65rem;color:var(--muted);white-space:nowrap;}
     .announce-empty{font-size:.78rem;color:var(--muted);padding:8px 0;}
 
+    /* ── Owner game manager ── */
+    .game-form-grid{display:grid;grid-template-columns:1fr 160px;gap:10px;margin-bottom:10px;}
+    @media(max-width:720px){.game-form-grid{grid-template-columns:1fr;}}
+    .field{background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.78rem;padding:8px 10px;outline:none;transition:border-color .18s;}
+    .field:focus{border-color:rgba(239,68,68,.45);}
+    .field::placeholder{color:var(--muted);}
+    .html-editor{width:100%;min-height:180px;resize:vertical;}
+    .games-list{margin-top:14px;border-top:1px solid var(--border);padding-top:12px;display:flex;flex-direction:column;gap:8px;}
+    .game-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.03);}
+    .game-row:last-child{border-bottom:none;}
+    .game-row-title{font-size:.84rem;font-weight:600;}
+    .game-row-meta{font-size:.67rem;color:var(--muted);margin-top:2px;word-break:break-all;}
+    .game-del{padding:5px 9px;border:1px solid rgba(239,68,68,.35);border-radius:5px;background:rgba(239,68,68,.08);color:var(--accent);font-size:.67rem;cursor:pointer;font-family:'JetBrains Mono',monospace;}
+    .game-del:hover{background:rgba(239,68,68,.16);}
+    .game-status{font-size:.73rem;min-height:16px;margin-top:8px;}
+
     /* ── User table ── */
     .user-table{width:100%;border-collapse:collapse;margin-bottom:0;}
     .user-table th{text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);color:var(--muted);font-size:.65rem;text-transform:uppercase;letter-spacing:.08em;}
@@ -238,6 +254,32 @@
       </div>
     </div>
 
+    <div id="games-section" style="display:none">
+      <h2>🎮 Owner Games</h2>
+      <div class="box">
+        <div class="game-form-grid">
+          <input class="field" id="game-name" placeholder="game name"/>
+          <input class="field" id="game-slug" placeholder="slug (optional)"/>
+        </div>
+        <div class="game-form-grid">
+          <input class="field" id="game-desc" placeholder="short description"/>
+          <select class="field" id="game-category">
+            <option value="action">action</option>
+            <option value="io">io</option>
+            <option value="puzzle">puzzle</option>
+            <option value="classic">classic</option>
+            <option value="casual" selected>casual</option>
+          </select>
+        </div>
+        <textarea class="field html-editor" id="game-html" placeholder="paste the full game HTML file contents here"></textarea>
+        <div class="announce-row">
+          <button class="btn-red" id="save-game-btn">save game for everyone</button>
+          <div class="game-status" id="game-status"></div>
+        </div>
+        <div class="games-list" id="games-list"></div>
+      </div>
+    </div>
+
     <!-- User table -->
     <h2>👤 Users</h2>
     <div class="box" style="padding:0;overflow:hidden;">
@@ -316,6 +358,7 @@
   const CHAT_CHANNEL     = "uwuprx-chat";
   const ANNOUNCE_CHANNEL = "uwuprx-announce";
   const ANNOUNCE_KEY     = "uwu_announces";
+  const GAMES_ENDPOINT   = "/api/games";
 
   const session  = JSON.parse(localStorage.getItem("uwu_session") || "{}");
   const isOwner  = session.role === "owner";
@@ -335,6 +378,113 @@
   function getSessionCode() {
     const channel = String(session.channel || "");
     return channel.startsWith("uwuprx-") ? channel.slice("uwuprx-".length) : "";
+  }
+
+  function setGameStatus(msg, type = "default") {
+    const el = document.getElementById("game-status");
+    if (!el) return;
+    el.textContent = msg || "";
+    el.style.color = type === "success" ? "var(--mint)" : type === "error" ? "var(--accent)" : "var(--dim)";
+  }
+
+  function escAttr(s) {
+    return escHtml(String(s || "")).replace(/"/g, "&quot;");
+  }
+
+  function slugify(v) {
+    return String(v || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 64);
+  }
+
+  async function fetchCustomGames() {
+    try {
+      const res = await fetch(GAMES_ENDPOINT, { cache: "no-store" });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return Array.isArray(data?.games) ? data.games : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function renderCustomGames(games) {
+    const list = document.getElementById("games-list");
+    if (!list) return;
+    if (!games.length) {
+      list.innerHTML = '<div class="announce-empty">no owner-uploaded games yet.</div>';
+      return;
+    }
+    list.innerHTML = games.map(g => `
+      <div class="game-row">
+        <div>
+          <div class="game-row-title">${escHtml(g.name || g.slug)}</div>
+          <div class="game-row-meta">/games/custom/${escHtml(g.slug)} · ${escHtml(g.category || "casual")} · ${escHtml(g.desc || "")}</div>
+        </div>
+        <button class="game-del" data-slug="${escAttr(g.slug)}">delete</button>
+      </div>
+    `).join("");
+
+    list.querySelectorAll(".game-del").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const actorCode = getSessionCode();
+        const slug = btn.dataset.slug;
+        if (!actorCode || !slug) return;
+        btn.disabled = true;
+        try {
+          const res = await fetch(GAMES_ENDPOINT, {
+            method: "DELETE",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ actorCode, slug }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data?.error || "delete failed");
+          renderCustomGames(Array.isArray(data?.games) ? data.games : []);
+          showToast(`deleted ${slug}`, "success");
+          addLog("🗑️", `deleted custom game ${slug}`, "yellow");
+        } catch (e) {
+          showToast(e.message || "delete failed", "error");
+        }
+        btn.disabled = false;
+      });
+    });
+  }
+
+  async function saveCustomGame() {
+    const actorCode = getSessionCode();
+    const name = document.getElementById("game-name")?.value.trim() || "";
+    const slugRaw = document.getElementById("game-slug")?.value.trim() || name;
+    const slug = slugify(slugRaw);
+    const desc = document.getElementById("game-desc")?.value.trim() || "";
+    const category = document.getElementById("game-category")?.value || "casual";
+    const html = document.getElementById("game-html")?.value || "";
+    if (!actorCode) return setGameStatus("missing session code — relogin required", "error");
+    if (!name || !slug || !html.trim()) return setGameStatus("name, slug, and html are required", "error");
+
+    setGameStatus("saving...", "default");
+    const btn = document.getElementById("save-game-btn");
+    if (btn) btn.disabled = true;
+    try {
+      const res = await fetch(GAMES_ENDPOINT, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ actorCode, name, slug, desc, category, html }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "save failed");
+      setGameStatus("✓ game saved for everyone", "success");
+      showToast("game uploaded", "success");
+      addLog("🎮", `saved custom game ${slug}`, "green");
+      const slugEl = document.getElementById("game-slug");
+      if (slugEl) slugEl.value = slug;
+      renderCustomGames(Array.isArray(data?.games) ? data.games : []);
+    } catch (e) {
+      setGameStatus(e.message || "save failed", "error");
+    }
+    if (btn) btn.disabled = false;
   }
 
   async function fetchUsersFromServer() {
@@ -522,6 +672,16 @@
   // ── Announce section (owner only) ──
   if (isOwner) {
     document.getElementById("announce-section").style.display = "block";
+    document.getElementById("games-section").style.display = "block";
+    document.getElementById("save-game-btn")?.addEventListener("click", saveCustomGame);
+    fetchCustomGames().then(renderCustomGames);
+    const slugEl = document.getElementById("game-slug");
+    slugEl?.addEventListener("input", () => { slugEl.dataset.manual = "1"; });
+    document.getElementById("game-name")?.addEventListener("input", (e) => {
+      if (!slugEl) return;
+      if (slugEl.dataset.manual === "1") return;
+      slugEl.value = slugify(e.target.value);
+    });
     document.getElementById("announce-btn").addEventListener("click", async () => {
       const text = document.getElementById("announce-text").value.trim();
       if (!text) return;

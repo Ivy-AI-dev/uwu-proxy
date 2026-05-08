@@ -1,15 +1,6 @@
 const PRESENCE_CHANNEL = "uwuprx-presence";
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*" };
-
-const USERS = {
-  [process.env.CODE_RYDER   || "82047"]: { user: "Ryder",   role: "owner"       },
-  [process.env.CODE_LOGAN   || "63914"]: { user: "Logan",   role: "slave owner" },
-  [process.env.CODE_BECKHAM || "39571"]: { user: "Beckham", role: "slave"       },
-  [process.env.CODE_KOLBY   || "74286"]: { user: "Kolby",   role: "slave"       },
-  [process.env.CODE_LEVI    || "51839"]: { user: "Levi",    role: "slave"       },
-  [process.env.CODE_LIAM    || "26473"]: { user: "Liam",    role: "slave"       },
-  [process.env.CODE_GIBSON  || "98132"]: { user: "Gibson",  role: "slave"       },
-};
+const { getEffectiveUsers } = require("./_lib/state");
 
 exports.handler = async (event) => {
   if (event.httpMethod === "OPTIONS") return { statusCode: 200, headers: CORS, body: "" };
@@ -18,7 +9,7 @@ exports.handler = async (event) => {
   let code = "";
   try { code = String(JSON.parse(event.body || "{}").code || ""); } catch {}
 
-  const match = USERS[code];
+  const match = (await getEffectiveUsers({ event, env: process.env })).find((u) => u.code === code);
   if (!match) return { statusCode: 401, headers: { ...CORS, "content-type": "application/json" }, body: JSON.stringify({ error: "unauthorized" }) };
 
   try {

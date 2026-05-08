@@ -52,6 +52,18 @@
   force = true
 
 [[redirects]]
+  from = "/api/games"
+  to = "/.netlify/functions/games"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/games/custom/:slug"
+  to = "/.netlify/functions/game-file?slug=:slug"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/bare/*"
   to = "/.netlify/functions/bare"
   status = 200
