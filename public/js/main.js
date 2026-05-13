@@ -5,12 +5,23 @@ const VERSION = "1.1.0";
 
 // ── Data ────────────────────────────────
 const GAMES = [];
-const EXTERNAL_GAMES_BASE_URL = "http://collegebroadd.scienceontheweb.net";
-const EXTERNAL_GAMES_REPO_API = `${EXTERNAL_GAMES_BASE_URL}/games.json`;
-const EXTERNAL_GAMES_ICON_URL = `${EXTERNAL_GAMES_BASE_URL}/favicon.ico`;
+const EXTERNAL_GAMES_BASE_HOST = "collegebroadd.scienceontheweb.net";
+const EXTERNAL_GAMES_HTTPS_BASE_URL = `https://${EXTERNAL_GAMES_BASE_HOST}`;
+const EXTERNAL_GAMES_HTTP_BASE_URL = `http://${EXTERNAL_GAMES_BASE_HOST}`;
+const EXTERNAL_GAMES_MANIFEST_PATH = "/games.json";
+const EXTERNAL_GAMES_ICON_PATH = "/favicon.ico";
 const EXTERNAL_GAMES_IGNORED_DIRS = new Set([".github", ".git", "assets", "static", "css", "js", "images", "img"]);
 const EXTERNAL_GAMES_CACHE_KEY = "external_games_cache";
 const EXTERNAL_GAMES_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+let externalGamesBaseUrl = EXTERNAL_GAMES_HTTPS_BASE_URL;
+
+function externalGamesManifestUrl(baseUrl = externalGamesBaseUrl) {
+  return `${baseUrl}${EXTERNAL_GAMES_MANIFEST_PATH}`;
+}
+
+function externalGamesIconUrl(baseUrl = externalGamesBaseUrl) {
+  return `${baseUrl}${EXTERNAL_GAMES_ICON_PATH}`;
+}
 
 function formatExternalGameName(slug) {
   return String(slug || "")
@@ -47,10 +58,20 @@ async function loadExternalRepoGames() {
   try {
     let slugs = readExternalGamesCache();
     if (!slugs.length) {
-      const res = await fetch(EXTERNAL_GAMES_REPO_API);
-      if (!res.ok) throw new Error(`games source request failed for ${EXTERNAL_GAMES_REPO_API} (${res.status})`);
-      const data = await res.json();
+      let data = null;
+      let activeBaseUrl = EXTERNAL_GAMES_HTTPS_BASE_URL;
+      for (const baseUrl of [EXTERNAL_GAMES_HTTPS_BASE_URL, EXTERNAL_GAMES_HTTP_BASE_URL]) {
+        const res = await fetch(externalGamesManifestUrl(baseUrl));
+        if (!res.ok) continue;
+        const parsed = await res.json();
+        if (!Array.isArray(parsed)) continue;
+        data = parsed;
+        activeBaseUrl = baseUrl;
+        break;
+      }
       if (!Array.isArray(data)) throw new Error("invalid games source response");
+      externalGamesBaseUrl = activeBaseUrl;
+      // Expected manifest format: ["slug"] or [{ slug: "slug" }] or [{ name: "slug" }].
       slugs = data
         .map((item) => typeof item === "string" ? item : item?.slug || item?.name)
         .map((name) => String(name || "").trim())
@@ -62,8 +83,8 @@ async function loadExternalRepoGames() {
     const externalGames = slugs
       .map((slug) => ({
         name: formatExternalGameName(slug),
-        url: `${EXTERNAL_GAMES_BASE_URL}/${encodeURIComponent(slug)}/`,
-        icon: EXTERNAL_GAMES_ICON_URL,
+        url: `${externalGamesBaseUrl}/${encodeURIComponent(slug)}/`,
+        icon: externalGamesIconUrl(),
         tag: "casual",
         category: "casual",
         desc: "From external games collection",
@@ -73,13 +94,14 @@ async function loadExternalRepoGames() {
     GAMES.length = 0;
     GAMES.push(...externalGames, ...retainedCustom);
   } catch (error) {
-    console.warn("Failed to load HTML-Games-V2 list", error);
+    console.warn("Failed to load external games list", error);
+    externalGamesBaseUrl = EXTERNAL_GAMES_HTTP_BASE_URL;
     GAMES.length = 0;
     GAMES.push(
       {
         name: "External Games",
-        url: `${EXTERNAL_GAMES_BASE_URL}/`,
-        icon: EXTERNAL_GAMES_ICON_URL,
+        url: `${externalGamesBaseUrl}/`,
+        icon: externalGamesIconUrl(),
         tag: "casual",
         category: "casual",
         desc: "Open the external games collection",
@@ -266,7 +288,7 @@ function gameIconUrl(game) {
   const explicitIcon = typeof game?.icon === "string" ? game.icon.trim() : "";
   if (explicitIcon) return explicitIcon;
   const fav = faviconUrl(game?.url || "");
-  return fav || EXTERNAL_GAMES_ICON_URL;
+  return fav || externalGamesIconUrl();
 }
 
 // ── Recent sites ─────────────────────────
