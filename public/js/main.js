@@ -69,9 +69,10 @@ async function loadExternalRepoGames() {
         activeBaseUrl = baseUrl;
         break;
       }
-      if (!Array.isArray(data)) throw new Error("invalid games source response");
+      if (!Array.isArray(data)) throw new Error("games manifest must be an array");
       externalGamesBaseUrl = activeBaseUrl;
-      // Expected manifest format: ["slug"] or [{ slug: "slug" }] or [{ name: "slug" }].
+      // Supported manifest shapes (for compatibility with simple generators): ["slug"], [{ slug: "slug" }], or [{ name: "slug" }].
+      // Preferred shape going forward is ["slug"] for smallest payload and simplest parsing.
       slugs = data
         .map((item) => typeof item === "string" ? item : item?.slug || item?.name)
         .map((name) => String(name || "").trim())
