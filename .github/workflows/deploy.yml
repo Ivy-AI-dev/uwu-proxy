@@ -19,13 +19,36 @@ jobs:
           node-version: 22
       - run: npm install
       - run: npm run build
-      - run: npx wrangler deploy --name velvet-note-app
-      - run: npx wrangler deploy --name amber-tide-hub
-      - run: npx wrangler deploy --name cedar-tools-app
-      - run: npx wrangler deploy --name maple-stream
-      - run: npx wrangler deploy --name cobalt-lens-app
-      - run: npx wrangler deploy --name indigo-wave
-      - run: npx wrangler deploy --name onyx-path-hub
-      - run: npx wrangler deploy --name prism-gate-app
-      - run: npx wrangler deploy --name quartz-hub
-      - run: npx wrangler deploy --name lunar-stack-app
+      - name: Deploy workers (retry transient failures)
+        run: |
+          set -euo pipefail
+          deploy_with_retry() {
+            local worker="$1"
+            local attempts=3
+            local delay=10
+            for attempt in $(seq 1 "$attempts"); do
+              if npx wrangler deploy --name "$worker"; then
+                return 0
+              fi
+              if [ "$attempt" -lt "$attempts" ]; then
+                echo "Deploy failed for $worker (attempt $attempt/$attempts). Retrying in ${delay}s..."
+                sleep "$delay"
+              fi
+            done
+            echo "Deploy failed for $worker after $attempts attempts."
+            return 1
+          }
+          for worker in \
+            velvet-note-app \
+            amber-tide-hub \
+            cedar-tools-app \
+            maple-stream \
+            cobalt-lens-app \
+            indigo-wave \
+            onyx-path-hub \
+            prism-gate-app \
+            quartz-hub \
+            lunar-stack-app
+          do
+            deploy_with_retry "$worker"
+          done
