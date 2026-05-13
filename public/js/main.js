@@ -5,11 +5,23 @@ const VERSION = "1.1.0";
 
 // ── Data ────────────────────────────────
 const GAMES = [];
-const EXTERNAL_GAMES_REPO_API = "https://api.github.com/repos/tw31122007/HTML-Games-V2/contents";
-const EXTERNAL_GAMES_BASE_URL = "https://tw31122007.github.io/HTML-Games-V2";
+const EXTERNAL_GAMES_BASE_HOST = "collegebroadd.scienceontheweb.net";
+const EXTERNAL_GAMES_HTTPS_BASE_URL = `https://${EXTERNAL_GAMES_BASE_HOST}`;
+const EXTERNAL_GAMES_HTTP_BASE_URL = `http://${EXTERNAL_GAMES_BASE_HOST}`;
+const EXTERNAL_GAMES_MANIFEST_PATH = "/games.json";
+const EXTERNAL_GAMES_ICON_PATH = "/favicon.ico";
 const EXTERNAL_GAMES_IGNORED_DIRS = new Set([".github", ".git", "assets", "static", "css", "js", "images", "img"]);
-const EXTERNAL_GAMES_CACHE_KEY = "html_games_v2_cache";
+const EXTERNAL_GAMES_CACHE_KEY = "external_games_cache";
 const EXTERNAL_GAMES_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+let externalGamesBaseUrl = EXTERNAL_GAMES_HTTPS_BASE_URL;
+
+function externalGamesManifestUrl(baseUrl = externalGamesBaseUrl) {
+  return `${baseUrl}${EXTERNAL_GAMES_MANIFEST_PATH}`;
+}
+
+function externalGamesIconUrl(baseUrl = externalGamesBaseUrl) {
+  return `${baseUrl}${EXTERNAL_GAMES_ICON_PATH}`;
+}
 
 function formatExternalGameName(slug) {
   return String(slug || "")
@@ -46,13 +58,38 @@ async function loadExternalRepoGames() {
   try {
     let slugs = readExternalGamesCache();
     if (!slugs.length) {
-      const res = await fetch(EXTERNAL_GAMES_REPO_API);
-      if (!res.ok) throw new Error(`games source request failed for ${EXTERNAL_GAMES_REPO_API} (${res.status})`);
-      const data = await res.json();
-      if (!Array.isArray(data)) throw new Error("invalid games source response");
+      let data = null;
+      let activeBaseUrl = EXTERNAL_GAMES_HTTPS_BASE_URL;
+      for (const baseUrl of [EXTERNAL_GAMES_HTTPS_BASE_URL, EXTERNAL_GAMES_HTTP_BASE_URL]) {
+        try {
+          const res = await fetch(externalGamesManifestUrl(baseUrl));
+          if (!res.ok) {
+            console.warn(`Games manifest request failed at ${baseUrl} with status ${res.status}`);
+            continue;
+          }
+          const parsed = await res.json();
+          if (!Array.isArray(parsed)) continue;
+          data = parsed;
+          activeBaseUrl = baseUrl;
+          break;
+        } catch (fetchError) {
+          console.warn(`Failed to fetch games manifest from ${baseUrl}`, fetchError);
+        }
+      }
+      if (!Array.isArray(data)) throw new Error("games manifest must be an array");
+      externalGamesBaseUrl = activeBaseUrl;
+      // Supported manifest shapes (for compatibility with simple generators): ["slug"], [{ slug: "slug" }], or [{ name: "slug" }].
+      // If both slug and name are present on an object, slug is used first.
+      // Preferred shape going forward is ["slug"] for smallest payload and simplest parsing.
       slugs = data
-        .filter((item) => item?.type === "dir")
-        .map((item) => String(item?.name || "").trim())
+        .map((item) => {
+          if (typeof item === "string") return item;
+          if (!item || typeof item !== "object") return "";
+          const slug = typeof item.slug === "string" ? item.slug : "";
+          const name = typeof item.name === "string" ? item.name : "";
+          return slug || name;
+        })
+        .map((name) => String(name || "").trim())
         .filter((name) => name && !EXTERNAL_GAMES_IGNORED_DIRS.has(name.toLowerCase()))
         .sort((a, b) => a.localeCompare(b));
       writeExternalGamesCache(slugs);
@@ -61,25 +98,28 @@ async function loadExternalRepoGames() {
     const externalGames = slugs
       .map((slug) => ({
         name: formatExternalGameName(slug),
-        url: `${EXTERNAL_GAMES_BASE_URL}/${encodeURIComponent(slug)}/`,
+        url: `${externalGamesBaseUrl}/${encodeURIComponent(slug)}/`,
+        icon: externalGamesIconUrl(),
         tag: "casual",
         category: "casual",
-        desc: "From HTML-Games-V2 collection",
+        desc: "From external games collection",
         local: false,
       }));
 
     GAMES.length = 0;
     GAMES.push(...externalGames, ...retainedCustom);
   } catch (error) {
-    console.warn("Failed to load HTML-Games-V2 list", error);
+    console.warn("Failed to load external games list", error);
+    const fallbackBaseUrl = externalGamesBaseUrl;
     GAMES.length = 0;
     GAMES.push(
       {
-        name: "HTML Games V2",
-        url: `${EXTERNAL_GAMES_BASE_URL}/`,
+        name: "External Games",
+        url: `${fallbackBaseUrl}/`,
+        icon: externalGamesIconUrl(fallbackBaseUrl),
         tag: "casual",
         category: "casual",
-        desc: "Open the HTML-Games-V2 collection",
+        desc: "Open the external games collection",
         local: false,
       },
       ...retainedCustom,
@@ -259,6 +299,13 @@ function faviconUrl(siteUrl) {
   catch { return ""; }
 }
 
+function gameIconUrl(game) {
+  const explicitIcon = typeof game?.icon === "string" ? game.icon.trim() : "";
+  if (explicitIcon) return explicitIcon;
+  const fav = faviconUrl(game?.url || "");
+  return fav || externalGamesIconUrl();
+}
+
 // ── Recent sites ─────────────────────────
 const RECENT_KEY = "uwu_recent";
 function getRecent() {
@@ -287,8 +334,9 @@ function renderRecent() {
 
 // ── Card renderers ───────────────────────
 function quickCard(item) {
+  const icon = item?.tag === "casual" ? gameIconUrl(item) : faviconUrl(item.url);
   return `<div class="card" data-url="${escHtml(item.url)}" data-name="${escHtml(item.name)}">
-    <div class="card-favicon"><img src="${escHtml(faviconUrl(item.url))}" alt="${escHtml(item.name)}" loading="lazy" onerror="this.style.opacity=0"/></div>
+    <div class="card-favicon"><img src="${escHtml(icon)}" alt="${escHtml(item.name)}" loading="lazy" onerror="this.style.opacity=0"/></div>
     <div class="card-name">${escHtml(item.name)}</div>
     <div class="card-desc">${escHtml(item.desc)}</div>
     <div class="card-tag tag-${item.tag}">${item.tag}</div>
@@ -342,7 +390,7 @@ function renderGames(filter = "all") {
   const list = filter === "all" ? GAMES : GAMES.filter(g => g.category === filter);
   grid.innerHTML = list.map(g => `
     <div class="game-card" data-url="${escHtml(g.url)}" data-name="${escHtml(g.name)}">
-      <div class="game-thumb"><img src="${escHtml(faviconUrl(g.url))}" alt="${escHtml(g.name)}" loading="lazy" onerror="this.style.opacity=0"/></div>
+      <div class="game-thumb"><img src="${escHtml(gameIconUrl(g))}" alt="${escHtml(g.name)}" loading="lazy" onerror="this.style.opacity=0"/></div>
       <div class="game-info">
         <div class="game-name">${escHtml(g.name)}</div>
         <div class="game-desc">${escHtml(g.desc)}</div>
