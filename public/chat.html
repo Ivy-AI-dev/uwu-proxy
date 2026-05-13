@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat · Uwu Gaming</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <script>(function(){var s=localStorage.getItem('uwu_session');if(!s)return location.replace('/login.html');try{var d=JSON.parse(s);if(!d.user||Date.now()-d.loginTime>7*24*60*60*1000){localStorage.removeItem('uwu_session');location.replace('/login.html');}}catch{location.replace('/login.html');}})()</script>
+</head>
+<body>
+<canvas id="stars-canvas"></canvas>
+<nav class="sidebar" id="sidebar"></nav>
+<main class="page">
+  <div class="page-hero">
+    <h1 class="page-hero-title">Chat</h1>
+    <p class="page-hero-sub">real-time messages with everyone online</p>
+  </div>
+  <div class="chat-layout">
+    <div class="chat-messages" id="chat-messages">
+      <div style="color:var(--text3);font-size:13px;text-align:center">connecting to chat…</div>
+    </div>
+    <div class="chat-input-row">
+      <input class="chat-input" id="chat-input" placeholder="say something…" maxlength="500" autocomplete="off" />
+      <button class="chat-send" id="chat-send">Send</button>
+    </div>
+  </div>
+</main>
+<div class="statusbar">
+  <div id="proxy-status" class="proxy-badge loading"><div class="proxy-dot"></div><span id="proxy-status-text">loading</span></div>
+  <div class="statusbar-spacer"></div>
+  <span class="statusbar-version" id="footer-version"></span>
+</div>
+<div class="toast-container" id="toast-container"></div>
+<script src="/js/main.js" type="module"></script>
+</body>
+</html>

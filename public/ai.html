@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI · Uwu Gaming</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <script>(function(){var s=localStorage.getItem('uwu_session');if(!s)return location.replace('/login.html');try{var d=JSON.parse(s);if(!d.user||Date.now()-d.loginTime>7*24*60*60*1000){localStorage.removeItem('uwu_session');location.replace('/login.html');}}catch{location.replace('/login.html');}})()</script>
+</head>
+<body>
+<canvas id="stars-canvas"></canvas>
+<nav class="sidebar" id="sidebar"></nav>
+<main class="page">
+  <div class="page-hero">
+    <h1 class="page-hero-title">AI</h1>
+    <p class="page-hero-sub">powered by Llama 3.3 · ask anything</p>
+  </div>
+  <div class="ai-layout">
+    <div class="ai-messages" id="ai-messages">
+      <div class="ai-msg assistant">
+        <div class="ai-msg-role">assistant</div>
+        <div class="ai-msg-body">hey! i'm your AI on Uwu Gaming. ask me anything 👾</div>
+      </div>
+    </div>
+    <div class="ai-input-row">
+      <textarea class="ai-input" id="ai-input" placeholder="type a message…" rows="1" maxlength="2000"></textarea>
+      <button class="ai-send" id="ai-send">Send</button>
+    </div>
+  </div>
+</main>
+<div class="statusbar">
+  <div id="proxy-status" class="proxy-badge loading"><div class="proxy-dot"></div><span id="proxy-status-text">loading</span></div>
+  <div class="statusbar-spacer"></div>
+  <span class="statusbar-version" id="footer-version"></span>
+</div>
+<div class="toast-container" id="toast-container"></div>
+<script src="/js/main.js" type="module"></script>
+</body>
+</html>

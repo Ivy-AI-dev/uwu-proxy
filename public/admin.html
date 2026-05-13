@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin · Uwu Gaming</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <script>(function(){var s=localStorage.getItem('uwu_session');if(!s)return location.replace('/login.html');try{var d=JSON.parse(s);if(!d.user||Date.now()-d.loginTime>7*24*60*60*1000){localStorage.removeItem('uwu_session');location.replace('/login.html');}}catch{location.replace('/login.html');}})()</script>
+</head>
+<body>
+<canvas id="stars-canvas"></canvas>
+<nav class="sidebar" id="sidebar"></nav>
+<main class="page">
+  <div class="page-hero">
+    <h1 class="page-hero-title">Admin</h1>
+    <p class="page-hero-sub">owner-only panel</p>
+  </div>
+  <div class="admin-grid">
+    <!-- User Codes -->
+    <div class="admin-card">
+      <h3>User Codes</h3>
+      <div id="user-list"></div>
+    </div>
+
+    <!-- Upload Game -->
+    <div class="admin-card">
+      <h3>Upload Game</h3>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <input class="setting-input" id="g-name" placeholder="Game name" />
+        <input class="setting-input" id="g-slug" placeholder="URL slug (e.g. my-game)" />
+        <select class="setting-input" id="g-cat">
+          <option value="action">Action</option>
+          <option value="io">IO</option>
+          <option value="puzzle">Puzzle</option>
+          <option value="classic">Classic</option>
+          <option value="casual" selected>Casual</option>
+        </select>
+        <input class="setting-input" id="g-desc" placeholder="Short description" />
+        <div class="upload-zone" id="upload-zone" onclick="document.getElementById('zip-input').click()">
+          <div class="upload-icon">📦</div>
+          <p id="upload-zone-text">Click or drag a .zip file here</p>
+          <input type="file" id="zip-input" accept=".zip" style="display:none" />
+        </div>
+        <button class="btn-primary" id="upload-btn">Upload Game</button>
+      </div>
+    </div>
+
+    <!-- Uploaded Games -->
+    <div class="admin-card" style="grid-column:1/-1">
+      <h3>Uploaded Games</h3>
+      <div id="uploaded-list" style="display:flex;flex-direction:column;gap:10px;margin-top:8px"></div>
+    </div>
+  </div>
+</main>
+
+<div class="statusbar">
+  <div id="proxy-status" class="proxy-badge loading"><div class="proxy-dot"></div><span id="proxy-status-text">loading</span></div>
+  <div class="statusbar-spacer"></div>
+  <span class="statusbar-version" id="footer-version"></span>
+</div>
+<div class="toast-container" id="toast-container"></div>
+<script src="/js/main.js" type="module"></script>
+<script>
+(function() {
+  var session = JSON.parse(localStorage.getItem('uwu_session') || '{}');
+  if (session.role !== 'owner') {
+    document.querySelector('.page-hero-sub').textContent = 'access denied — owner only';
+    document.querySelector('.admin-grid').style.display = 'none';
+    return;
+  }
+  var adminCode = session.channel.replace('uwugaming-', '');
+
+  // ── User codes ──
+  async function loadUsers() {
+    try {
+      var res  = await fetch('/api/auth-codes');
+      var data = await res.json();
+      var list = document.getElementById('user-list');
+      list.innerHTML = data.users.map(function(u) {
+        return '<div class="admin-user-row">' +
+          '<div><div class="admin-user-name">' + u.user + '</div><div class="admin-user-role">' + u.role + '</div></div>' +
+          '<input class="admin-code-input" id="code-' + u.user + '" value="' + u.code + '" maxlength="5" inputmode="numeric" />' +
+          '<button class="admin-save-btn" onclick="saveCode(\'' + u.user + '\')">Save</button>' +
+          '</div>';
+      }).join('');
+    } catch(e) {}
+  }
+
+  window.saveCode = async function(user) {
+    var code = document.getElementById('code-' + user).value.trim();
+    if (!/^\d{5}$/.test(code)) { window.toast && window.toast('code must be 5 digits', 'error'); return; }
+    try {
+      var res = await fetch('/api/auth-codes', { method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ actorCode: adminCode, user, code }) });
+      var d = await res.json();
+      if (!res.ok) { window.toast && window.toast(d.error || 'error', 'error'); return; }
+      window.toast && window.toast('saved!', 'success');
+      loadUsers();
+    } catch(e) { window.toast && window.toast('error', 'error'); }
+  };
+
+  loadUsers();
+
+  // ── Upload game ──
+  var zone  = document.getElementById('upload-zone');
+  var input = document.getElementById('zip-input');
+  zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('drag'); });
+  zone.addEventListener('dragleave', function() { zone.classList.remove('drag'); });
+  zone.addEventListener('drop', function(e) { e.preventDefault(); zone.classList.remove('drag'); input.files = e.dataTransfer.files; document.getElementById('upload-zone-text').textContent = input.files[0]?.name || 'file selected'; });
+  input.addEventListener('change', function() { document.getElementById('upload-zone-text').textContent = input.files[0]?.name || 'file selected'; });
+
+  document.getElementById('upload-btn').addEventListener('click', async function() {
+    var name = document.getElementById('g-name').value.trim();
+    var slug = document.getElementById('g-slug').value.trim();
+    var cat  = document.getElementById('g-cat').value;
+    var desc = document.getElementById('g-desc').value.trim();
+    var file = input.files[0];
+    if (!name || !slug || !file) { window.toast && window.toast('name, slug and zip required', 'error'); return; }
+    var fd = new FormData();
+    fd.append('adminCode', adminCode);
+    fd.append('name', name);
+    fd.append('slug', slug);
+    fd.append('category', cat);
+    fd.append('desc', desc);
+    fd.append('zip', file);
+    document.getElementById('upload-btn').disabled = true;
+    document.getElementById('upload-btn').textContent = 'uploading…';
+    try {
+      var res = await fetch('/api/games/upload', { method: 'POST', body: fd });
+      var d   = await res.json();
+      if (!res.ok) { window.toast && window.toast(d.error || 'upload failed', 'error'); return; }
+      window.toast && window.toast('game uploaded!', 'success');
+      document.getElementById('g-name').value = '';
+      document.getElementById('g-slug').value = '';
+      document.getElementById('g-desc').value = '';
+      input.value = '';
+      document.getElementById('upload-zone-text').textContent = 'Click or drag a .zip file here';
+      loadUploadedGames();
+    } catch(e) { window.toast && window.toast('error: ' + e.message, 'error'); }
+    finally { document.getElementById('upload-btn').disabled = false; document.getElementById('upload-btn').textContent = 'Upload Game'; }
+  });
+
+  // ── Uploaded games list ──
+  async function loadUploadedGames() {
+    try {
+      var res   = await fetch('/api/games/list');
+      var games = await res.json();
+      var list  = document.getElementById('uploaded-list');
+      var uploaded = games.filter(function(g) { return g.uploaded; });
+      if (!uploaded.length) { list.innerHTML = '<div style="color:var(--text3);font-size:14px">no uploaded games yet</div>'; return; }
+      list.innerHTML = uploaded.map(function(g) {
+        return '<div style="display:flex;align-items:center;gap:12px;padding:14px;background:var(--bg3);border-radius:10px">' +
+          '<div style="flex:1"><div style="font-weight:600;font-size:14px">' + g.name + '</div><div style="font-size:12px;color:var(--text2)">' + g.slug + ' · ' + (g.category||'casual') + '</div></div>' +
+          '<a href="' + g.url + '" target="_blank" style="font-size:12px;color:var(--accent2)">preview</a>' +
+          '<button onclick="deleteGame(\'' + g.slug + '\')" style="background:#ff4b4b20;border:1px solid #ff4b4b40;color:#ff6b6b;padding:6px 14px;border-radius:8px;font-size:12px;cursor:pointer">delete</button>' +
+          '</div>';
+      }).join('');
+    } catch(e) {}
+  }
+
+  window.deleteGame = async function(slug) {
+    if (!confirm('Delete ' + slug + '?')) return;
+    try {
+      var res = await fetch('/api/games/delete', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ adminCode, slug }) });
+      var d   = await res.json();
+      if (!res.ok) { window.toast && window.toast(d.error || 'error', 'error'); return; }
+      window.toast && window.toast('deleted', 'success');
+      loadUploadedGames();
+    } catch(e) { window.toast && window.toast('error', 'error'); }
+  };
+
+  loadUploadedGames();
+})();
+</script>
+</body>
+</html>

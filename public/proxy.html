@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Uwu Gaming — Proxy</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body style="background:#0b0b14;display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px;color:#9090b0;font-family:sans-serif">
+  <div style="font-size:32px">🔄</div>
+  <div style="font-size:14px">loading proxy…</div>
+  <script src="/uv/uv.bundle.js"></script>
+  <script src="/uv/uv.client.js"></script>
+  <script>
+    (async function() {
+      try {
+        if (!navigator.serviceWorker.controller) {
+          await navigator.serviceWorker.register('/uv/sw.js', { scope: '/service/' });
+          await new Promise(r => { navigator.serviceWorker.addEventListener('controllerchange', r, { once: true }); });
+        }
+        var url = new URLSearchParams(location.search).get('url') || 'https://google.com';
+        if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+        location.replace(__uv$config.prefix + __uv$config.encodeUrl(url));
+      } catch(e) {
+        document.querySelector('div:last-child').textContent = 'proxy error: ' + e.message;
+      }
+    })();
+  </script>
+</body>
+</html>

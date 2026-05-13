@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Apps · Uwu Gaming</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <script>(function(){var s=localStorage.getItem('uwu_session');if(!s)return location.replace('/login.html');try{var d=JSON.parse(s);if(!d.user||Date.now()-d.loginTime>7*24*60*60*1000){localStorage.removeItem('uwu_session');location.replace('/login.html');}}catch{location.replace('/login.html');}})()</script>
+</head>
+<body>
+<canvas id="stars-canvas"></canvas>
+<nav class="sidebar" id="sidebar"></nav>
+<main class="page">
+  <div class="page-hero">
+    <h1 class="page-hero-title">Apps</h1>
+    <p class="page-hero-sub">your favourite sites, unblocked</p>
+  </div>
+  <div class="container">
+    <div class="filters" id="app-filters">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="media">Media</button>
+      <button class="filter-btn" data-filter="social">Social</button>
+      <button class="filter-btn" data-filter="ai">AI</button>
+      <button class="filter-btn" data-filter="productivity">Productivity</button>
+    </div>
+    <div class="apps-grid" id="apps-grid"></div>
+  </div>
+</main>
+<div class="statusbar">
+  <div id="proxy-status" class="proxy-badge loading"><div class="proxy-dot"></div><span id="proxy-status-text">loading</span></div>
+  <div class="statusbar-spacer"></div>
+  <span class="statusbar-version" id="footer-version"></span>
+</div>
+<div class="toast-container" id="toast-container"></div>
+<script src="/js/main.js" type="module"></script>
+</body>
+</html>

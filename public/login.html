@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Uwu Gaming — Login</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+<canvas id="stars-canvas"></canvas>
+<div class="login-wrap">
+  <div class="login-box">
+    <div class="login-logo">
+      <svg width="48" height="38" viewBox="0 0 20 16" fill="none">
+        <circle cx="6"  cy="7" r="3" fill="white"/>
+        <circle cx="14" cy="7" r="3" fill="white"/>
+        <path d="M5 12 Q10 15.5 15 12" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="login-title">Uwu Gaming</div>
+    <div class="login-sub">Enter your access code to continue</div>
+    <input class="login-input" id="code-input" type="password" inputmode="numeric" maxlength="5" placeholder="·····" autocomplete="off" />
+    <button class="login-btn" id="login-btn">Enter</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+<script src="/js/main.js" type="module"></script>
+<script>
+  (function() {
+    var input = document.getElementById('code-input');
+    var btn   = document.getElementById('login-btn');
+    var err   = document.getElementById('login-error');
+
+    async function tryLogin() {
+      var code = input.value.trim();
+      if (code.length !== 5) { err.textContent = 'code must be 5 digits'; return; }
+      btn.disabled = true; err.textContent = '';
+      try {
+        var res  = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ code }) });
+        var data = await res.json();
+        if (!res.ok) { err.textContent = data.error || 'wrong code'; btn.disabled = false; return; }
+        localStorage.setItem('uwu_session', JSON.stringify({ user: data.user, role: data.role, channel: data.channel, loginTime: Date.now() }));
+        location.replace('/');
+      } catch(e) { err.textContent = 'connection error'; btn.disabled = false; }
+    }
+
+    btn.addEventListener('click', tryLogin);
+    input.addEventListener('keydown', function(e) { if (e.key === 'Enter') tryLogin(); });
+  })();
+</script>
+</body>
+</html>

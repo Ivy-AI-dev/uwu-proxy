@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cheats · Uwu Gaming</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <script>(function(){var s=localStorage.getItem('uwu_session');if(!s)return location.replace('/login.html');try{var d=JSON.parse(s);if(!d.user||Date.now()-d.loginTime>7*24*60*60*1000){localStorage.removeItem('uwu_session');location.replace('/login.html');}}catch{location.replace('/login.html');}})()</script>
+</head>
+<body>
+<canvas id="stars-canvas"></canvas>
+<nav class="sidebar" id="sidebar"></nav>
+<main class="page">
+  <div class="page-hero">
+    <h1 class="page-hero-title">Cheats</h1>
+    <p class="page-hero-sub">Blooket tools — use responsibly</p>
+  </div>
+  <div class="cheats-layout">
+    <div class="cheats-frame-wrap">
+      <iframe id="blooket-frame" src="https://www.blooket.com" allowfullscreen></iframe>
+    </div>
+    <div class="cheats-panel">
+      <h3>🎯 Blooket Tools</h3>
+      <p>Open a Blooket game in the frame, then use these buttons.</p>
+
+      <div style="height:1px;background:var(--border);margin:4px 0"></div>
+
+      <button class="cheat-btn" onclick="injectScript('flood')">🤖 Flood Bots</button>
+      <button class="cheat-btn" onclick="injectScript('answer')">✅ Auto Answer</button>
+      <button class="cheat-btn" onclick="injectScript('tokens')">🪙 Token Farm</button>
+      <button class="cheat-btn" onclick="injectScript('blooks')">🐟 Unlock All Blooks</button>
+      <button class="cheat-btn" onclick="injectScript('speed')">⚡ Speed Hack</button>
+
+      <div style="height:1px;background:var(--border);margin:4px 0"></div>
+
+      <button class="cheat-btn danger" onclick="reloadFrame()">🔄 Reload Blooket</button>
+
+      <div class="cheat-status" id="cheat-status">ready</div>
+
+      <div style="height:1px;background:var(--border);margin:4px 0"></div>
+      <p style="font-size:11px;color:var(--text3)">Scripts inject into the Blooket frame. Some may only work during a live game.</p>
+    </div>
+  </div>
+</main>
+
+<div class="statusbar">
+  <div id="proxy-status" class="proxy-badge loading"><div class="proxy-dot"></div><span id="proxy-status-text">loading</span></div>
+  <div class="statusbar-spacer"></div>
+  <span class="statusbar-version" id="footer-version"></span>
+</div>
+<div class="toast-container" id="toast-container"></div>
+<script src="/js/main.js" type="module"></script>
+<script>
+const SCRIPTS = {
+  flood: `
+    var amt = prompt("How many bots? (max 100)", "20");
+    if (!amt) return;
+    amt = Math.min(parseInt(amt)||20, 100);
+    var gameCode = prompt("Enter Blooket game code:");
+    if (!gameCode) return;
+    var names = ["xXProGamer","NotARobot","TotallyHuman","BlooketBot","GigaChad","NPC_"+Math.floor(Math.random()*9999)];
+    var status = document.getElementById ? document.getElementById('cheat-status') : null;
+    var joined = 0;
+    async function joinBot(n) {
+      try {
+        var r = await fetch("https://fb.blooket.com/c/SFuBbV5nxv9V1pFd8q4c/joinGame",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({gameCode:gameCode,name:names[Math.floor(Math.random()*names.length)]+"_"+n})});
+        if (r.ok) joined++;
+      } catch(e){}
+    }
+    for(var i=0;i<amt;i++) joinBot(i);
+    setTimeout(()=>{ if(status) status.textContent = "sent "+amt+" bots!"; }, 1500);
+  `,
+  answer: `
+    var status = window.parent.document.getElementById('cheat-status');
+    if(status) status.textContent = 'auto-answer active';
+    setInterval(function(){
+      var btns = document.querySelectorAll('[class*="answer"],[class*="Answer"],[class*="option"],[class*="Option"]');
+      if(btns.length){
+        var correct = Array.from(btns).find(b=>b.style.background&&b.style.background.includes('green'))||btns[0];
+        if(correct) correct.click();
+      }
+    }, 300);
+  `,
+  tokens: `
+    var status = window.parent.document.getElementById('cheat-status');
+    var added = 0;
+    setInterval(function(){
+      try {
+        var state = window.__reactFiber$||window._react;
+        var inp = document.querySelector('[class*="token"],[class*="Token"]');
+        if(inp){ inp.click(); added++; }
+        if(status && added%10===0) status.textContent = 'tokens: +'+added;
+      } catch(e){}
+    }, 200);
+  `,
+  blooks: `
+    var status = window.parent.document.getElementById('cheat-status');
+    if(status) status.textContent = 'attempting blook unlock...';
+    var keys = Object.keys(localStorage).filter(k=>k.includes('blook')||k.includes('Blook'));
+    console.log('Blook keys found:', keys);
+    if(status) status.textContent = keys.length ? 'found '+keys.length+' blook keys' : 'no blook data found here';
+  `,
+  speed: `
+    var status = window.parent.document.getElementById('cheat-status');
+    window.__origSetTimeout = window.setTimeout;
+    window.setTimeout = function(fn,ms,...a){ return window.__origSetTimeout(fn,Math.min(ms,50),...a); };
+    window.__origSetInterval = window.setInterval;
+    window.setInterval = function(fn,ms,...a){ return window.__origSetInterval(fn,Math.min(ms,50),...a); };
+    if(status) status.textContent = 'speed hack active';
+  `,
+};
+
+function injectScript(name) {
+  var frame = document.getElementById('blooket-frame');
+  var status = document.getElementById('cheat-status');
+  if (!frame || !frame.contentWindow) {
+    status.textContent = 'frame not ready';
+    return;
+  }
+  try {
+    frame.contentWindow.eval(SCRIPTS[name] || '');
+    status.textContent = name + ' injected!';
+  } catch(e) {
+    status.textContent = 'blocked (CORS) — open blooket.com first';
+    console.warn('inject error:', e);
+  }
+}
+
+function reloadFrame() {
+  var frame = document.getElementById('blooket-frame');
+  if (frame) { frame.src = 'https://www.blooket.com'; document.getElementById('cheat-status').textContent = 'reloaded'; }
+}
+</script>
+</body>
+</html>
