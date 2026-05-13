@@ -5,11 +5,11 @@ const VERSION = "1.1.0";
 
 // ── Data ────────────────────────────────
 const GAMES = [];
-const EXTERNAL_GAMES_REPO_API = "https://api.github.com/repos/tw31122007/HTML-Games-V2/contents";
-const EXTERNAL_GAMES_BASE_URL = "https://tw31122007.github.io/HTML-Games-V2";
-const EXTERNAL_GAMES_ICON_URL = "https://cdn.jsdelivr.net/gh/un-pkg/npm@main/bundle-min.svg";
+const EXTERNAL_GAMES_BASE_URL = "http://collegebroadd.scienceontheweb.net";
+const EXTERNAL_GAMES_REPO_API = `${EXTERNAL_GAMES_BASE_URL}/games.json`;
+const EXTERNAL_GAMES_ICON_URL = `${EXTERNAL_GAMES_BASE_URL}/favicon.ico`;
 const EXTERNAL_GAMES_IGNORED_DIRS = new Set([".github", ".git", "assets", "static", "css", "js", "images", "img"]);
-const EXTERNAL_GAMES_CACHE_KEY = "html_games_v2_cache";
+const EXTERNAL_GAMES_CACHE_KEY = "external_games_cache";
 const EXTERNAL_GAMES_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 
 function formatExternalGameName(slug) {
@@ -52,8 +52,8 @@ async function loadExternalRepoGames() {
       const data = await res.json();
       if (!Array.isArray(data)) throw new Error("invalid games source response");
       slugs = data
-        .filter((item) => item?.type === "dir")
-        .map((item) => String(item?.name || "").trim())
+        .map((item) => typeof item === "string" ? item : item?.slug || item?.name)
+        .map((name) => String(name || "").trim())
         .filter((name) => name && !EXTERNAL_GAMES_IGNORED_DIRS.has(name.toLowerCase()))
         .sort((a, b) => a.localeCompare(b));
       writeExternalGamesCache(slugs);
@@ -66,7 +66,7 @@ async function loadExternalRepoGames() {
         icon: EXTERNAL_GAMES_ICON_URL,
         tag: "casual",
         category: "casual",
-        desc: "From HTML-Games-V2 collection",
+        desc: "From external games collection",
         local: false,
       }));
 
@@ -77,12 +77,12 @@ async function loadExternalRepoGames() {
     GAMES.length = 0;
     GAMES.push(
       {
-        name: "HTML Games V2",
+        name: "External Games",
         url: `${EXTERNAL_GAMES_BASE_URL}/`,
         icon: EXTERNAL_GAMES_ICON_URL,
         tag: "casual",
         category: "casual",
-        desc: "Open the HTML-Games-V2 collection",
+        desc: "Open the external games collection",
         local: false,
       },
       ...retainedCustom,
