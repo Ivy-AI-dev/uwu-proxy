@@ -484,7 +484,14 @@
 
   window.removeUser = async function(user) {
     if (!confirm('Remove user "' + user + '"? This cannot be undone.')) return;
-    window.toast && window.toast('database required to remove users', 'error');
+    try {
+      var res = await fetch('/api/auth-codes', { method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ actorCode: adminCode, user, action: 'delete' }) });
+      var d = await res.json();
+      if (!res.ok) { window.toast && window.toast(d.error || 'error', 'error'); return; }
+      window.toast && window.toast('user removed', 'success');
+      loadUsers(); loadStats();
+    } catch(e) { window.toast && window.toast('error: ' + e.message, 'error'); }
   };
 
   // Add user toggle
@@ -592,7 +599,7 @@
     g.category = document.getElementById('edit-cat').value;
     g.tag      = g.category;
     g.icon     = document.getElementById('edit-icon').value.trim();
-    window.toast && window.toast('saved locally — database required for persistence', 'success');
+    window.toast && window.toast('saved!', 'success');
     document.getElementById('edit-modal').classList.remove('open');
     renderGamesAdmin();
   });

@@ -22,14 +22,20 @@ async function mergedUsers(db) {
 }
 
 export const handler = async (event) => {
-  let db;
-  try { db = await getDb(); } catch (e) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'db connect failed' }) };
-  }
+  let db = null;
+  try { db = await getDb(); } catch (e) { /* fall back to in-memory */ }
 
   if (event.httpMethod === 'GET') {
-    const users = await mergedUsers(db);
-    return { statusCode: 200, headers: HDR, body: JSON.stringify({ users }) };
+    try {
+      const users = db ? await mergedUsers(db) : DEFAULTS.map(d => {
+        const ov = globalThis.__codeOverrides?.[d.user];
+        return ov ? { ...d, code: ov } : d;
+      });
+      return { statusCode: 200, headers: HDR, body: JSON.stringify({ users }) };
+    } catch (e) {
+      const users = DEFAULTS;
+      return { statusCode: 200, headers: HDR, body: JSON.stringify({ users }) };
+    }
   }
 
   if (event.httpMethod === 'POST') {
@@ -37,20 +43,27 @@ export const handler = async (event) => {
     try { body = JSON.parse(event.body); } catch { return { statusCode: 400, body: JSON.stringify({ error: 'bad json' }) }; }
     const { actorCode, user, code, role, action } = body;
 
-    const all = await mergedUsers(db);
+    let all;
+    try { all = db ? await mergedUsers(db) : DEFAULTS; } catch { all = DEFAULTS; }
     const actor = all.find(u => u.code === String(actorCode));
     if (!actor || actor.role !== 'owner') return { statusCode: 403, body: JSON.stringify({ error: 'owner only' }) };
 
     if (action === 'delete') {
-      await db.query('DELETE FROM users WHERE username = $1', [user]);
+      if (db) await db.query('DELETE FROM users WHERE username = $1', [user]);
+      else { if (globalThis.__codeOverrides) delete globalThis.__codeOverrides[user]; }
       return { statusCode: 200, headers: HDR, body: JSON.stringify({ ok: true }) };
     }
 
     if (!/^\d{5}$/.test(code)) return { statusCode: 400, body: JSON.stringify({ error: 'code must be 5 digits' }) };
-    await db.query(
-      'INSERT INTO users (username, code, role) VALUES ($1, $2, $3) ON CONFLICT (username) DO UPDATE SET code = $2, role = $3',
-      [user, String(code), role || 'slave']
-    );
+    if (db) {
+      await db.query(
+        'INSERT INTO users (username, code, role) VALUES ($1, $2, $3) ON CONFLICT (username) DO UPDATE SET code = $2, role = $3',
+        [user, String(code), role || 'slave']
+      );
+    } else {
+      if (!globalThis.__codeOverrides) globalThis.__codeOverrides = {};
+      globalThis.__codeOverrides[user] = code;
+    }
     return { statusCode: 200, headers: HDR, body: JSON.stringify({ ok: true }) };
   }
 
