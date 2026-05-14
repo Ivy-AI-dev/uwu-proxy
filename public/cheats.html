@@ -60,14 +60,13 @@
   var frame  = document.getElementById('blooket-frame');
   status.textContent = 'starting proxy...';
   try {
-    if (!navigator.serviceWorker.controller) {
-      await navigator.serviceWorker.register('/uv/sw.js', { scope: '/service/' });
-      await new Promise(function(r) { navigator.serviceWorker.addEventListener('controllerchange', r, { once: true }); });
-    }
+    await navigator.serviceWorker.register('/uv/sw.js', { scope: '/service/' });
+    await navigator.serviceWorker.ready;
     frame.src = __uv$config.prefix + __uv$config.encodeUrl('https://www.blooket.com');
-    status.textContent = 'blooket loading — wait for the page, then use cheats';
+    status.textContent = 'blooket loading — wait for it, then use cheats';
   } catch(e) {
     status.textContent = 'proxy error: ' + e.message;
+    frame.src = 'https://www.blooket.com';
   }
 })();
 
