@@ -9,6 +9,11 @@
   NODE_VERSION = "20"
 
 [[redirects]]
+  from = "/api/game-proxy"
+  to = "/.netlify/functions/game-proxy"
+  status = 200
+
+[[redirects]]
   from = "/api/auth"
   to = "/.netlify/functions/auth"
   status = 200
