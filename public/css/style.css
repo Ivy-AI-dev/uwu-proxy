@@ -211,14 +211,15 @@ button { cursor: pointer; font-family: inherit; }
   border-radius: var(--radius);
   padding: 20px;
   cursor: pointer;
-  transition: border-color .15s, transform .15s, background .15s;
+  transition: border-color .2s, transform .2s cubic-bezier(.34,1.56,.64,1), background .2s, box-shadow .2s;
   display: flex; flex-direction: column; gap: 10px;
+  animation: cardIn 0.5s cubic-bezier(.34,1.56,.64,1) both;
 }
 .card:hover {
   border-color: var(--accent);
   background: var(--bg3);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(232,25,110,.12);
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 10px 32px rgba(232,25,110,.16), 0 0 0 1px rgba(232,25,110,.1);
 }
 .card-favicon {
   width: 40px; height: 40px;
@@ -255,18 +256,27 @@ button { cursor: pointer; font-family: inherit; }
   gap: 20px;
 }
 
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(32px) scale(0.95); }
+  to   { opacity: 1; transform: none; }
+}
+
 .game-card {
   background: var(--bg2);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   overflow: hidden; cursor: pointer;
-  transition: border-color .2s, transform .2s, box-shadow .2s;
+  transition: border-color .25s, transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s;
+  animation: cardIn 0.55s cubic-bezier(.34,1.56,.64,1) both;
+  will-change: transform;
 }
 .game-card:hover {
   border-color: var(--accent);
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(232,25,110,.18);
+  transform: translateY(-6px) scale(1.015);
+  box-shadow: 0 16px 48px rgba(232,25,110,.22), 0 0 0 1px rgba(232,25,110,.15);
 }
+.game-card:hover .game-thumb-img { transform: scale(1.06); }
+.game-card:hover .game-thumb-letter { color: rgba(255,255,255,.38); }
 
 .game-thumb {
   height: 160px;
@@ -276,6 +286,7 @@ button { cursor: pointer; font-family: inherit; }
 }
 .game-thumb-img {
   width: 100%; height: 100%; object-fit: cover;
+  transition: transform .4s cubic-bezier(.34,1.2,.64,1);
 }
 .game-thumb-inner {
   width: 100%; height: 100%;
@@ -284,12 +295,14 @@ button { cursor: pointer; font-family: inherit; }
 }
 .game-thumb-inner::after {
   content: ''; position: absolute; inset: 0;
-  background: linear-gradient(to bottom, transparent 40%, rgba(0,0,0,.45));
+  background: linear-gradient(to bottom, transparent 30%, rgba(0,0,0,.55));
 }
 .game-thumb-letter {
-  font-size: 72px; font-weight: 900; color: rgba(255,255,255,.22);
+  font-size: 80px; font-weight: 900; color: rgba(255,255,255,.28);
   line-height: 1; user-select: none; position: relative; z-index: 1;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  transition: color .25s;
+  text-shadow: 0 4px 24px rgba(0,0,0,.4);
 }
 
 .game-info { padding: 18px; }

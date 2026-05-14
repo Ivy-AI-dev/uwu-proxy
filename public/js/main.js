@@ -38,6 +38,7 @@ async function loadGames() {
       name:     String(g.name || ""),
       url:      String(g.url  || `/games/${g.slug}/index.html`),
       icon:     g.icon || "",
+      color:    g.color || "",
       tag:      g.category || g.tag || "casual",
       category: g.category || g.tag || "casual",
       desc:     String(g.desc || ""),
@@ -125,21 +126,22 @@ function faviconUrl(siteUrl) {
   catch { return ""; }
 }
 
-// ── Game thumbnail (gradient per category) ─
-const THUMB_GRADIENTS = {
-  action:  "linear-gradient(135deg,#e8196e 0%,#ff5e35 100%)",
-  classic: "linear-gradient(135deg,#7c3aed 0%,#db2777 100%)",
-  casual:  "linear-gradient(135deg,#0ea5e9 0%,#6366f1 100%)",
-  io:      "linear-gradient(135deg,#059669 0%,#0ea5e9 100%)",
-  puzzle:  "linear-gradient(135deg,#d97706 0%,#dc2626 100%)",
+// ── Game thumbnail ────────────────────────
+const CATEGORY_GRAD = {
+  action:  "linear-gradient(135deg,#e8196e,#ff5e35)",
+  classic: "linear-gradient(135deg,#7c3aed,#db2777)",
+  casual:  "linear-gradient(135deg,#0ea5e9,#6366f1)",
+  io:      "linear-gradient(135deg,#059669,#0ea5e9)",
+  puzzle:  "linear-gradient(135deg,#d97706,#dc2626)",
 };
+const THUMB_GRADIENTS = CATEGORY_GRAD; // alias for renderQuickGames
 function gameThumbHtml(game) {
-  const grad   = THUMB_GRADIENTS[game.category] || THUMB_GRADIENTS.casual;
+  const grad   = game.color || CATEGORY_GRAD[game.category] || CATEGORY_GRAD.casual;
   const letter = (game.name || "?").charAt(0).toUpperCase();
-  const fallbackDiv = `<div class="game-thumb-inner" style="background:${grad};display:none"><span class="game-thumb-letter">${escHtml(letter)}</span></div>`;
-  const iconUrl = game.icon || (!game.url?.startsWith("/") ? faviconUrl(game.url) : "");
+  const fallback = `<div class="game-thumb-inner" style="background:${grad};display:none"><span class="game-thumb-letter">${escHtml(letter)}</span></div>`;
+  const iconUrl  = game.icon || (!game.url?.startsWith("/") ? faviconUrl(game.url) : "");
   if (!iconUrl) return `<div class="game-thumb-inner" style="background:${grad}"><span class="game-thumb-letter">${escHtml(letter)}</span></div>`;
-  return `<img src="${escHtml(iconUrl)}" alt="" loading="lazy" class="game-thumb-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />${fallbackDiv}`;
+  return `<img src="${escHtml(iconUrl)}" alt="" loading="lazy" class="game-thumb-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />${fallback}`;
 }
 
 // ── Escape HTML ──────────────────────────
@@ -154,7 +156,7 @@ function renderQuickGames() {
   const items = GAMES.slice(0, 6);
   if (!items.length) { el.innerHTML = '<div style="color:var(--text3);font-size:14px">no games yet — upload some in admin</div>'; return; }
   el.innerHTML = items.map(g => {
-    const grad   = THUMB_GRADIENTS[g.category] || THUMB_GRADIENTS.casual;
+    const grad   = g.color || CATEGORY_GRAD[g.category] || CATEGORY_GRAD.casual;
     const letter = (g.name||"?").charAt(0).toUpperCase();
     const iconUrl = g.icon || (!g.url?.startsWith("/") ? faviconUrl(g.url) : "");
     const iconHtml = iconUrl
@@ -192,8 +194,8 @@ function renderGames(filter = "all") {
     grid.innerHTML = `<div class="games-empty"><p>${filter === "all" ? "No games uploaded yet." : "No " + filter + " games."}</p><p style="font-size:13px">Ask the owner to upload some in the admin panel.</p></div>`;
     return;
   }
-  grid.innerHTML = list.map(g => `
-    <div class="game-card" data-url="${escHtml(g.url)}" data-name="${escHtml(g.name)}">
+  grid.innerHTML = list.map((g, i) => `
+    <div class="game-card" data-url="${escHtml(g.url)}" data-name="${escHtml(g.name)}" style="animation-delay:${i * 55}ms">
       <div class="game-thumb">${gameThumbHtml(g)}</div>
       <div class="game-info">
         <div class="game-name">${escHtml(g.name)}</div>
@@ -328,32 +330,99 @@ function initSettings() {
   document.getElementById("clear-history-btn")?.addEventListener("click", clearRecent);
 }
 
-// ── Stars ────────────────────────────────
+// ── Particles ────────────────────────────
 function initStars() {
   const canvas = document.getElementById("stars-canvas");
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
-  let stars = [];
-  function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-  function makeStars() {
-    stars = Array.from({ length: 120 }, () => ({
-      x: Math.random() * canvas.width, y: Math.random() * canvas.height,
-      r: Math.random() * 1.2 + .3, a: Math.random(),
-      s: (Math.random() - .5) * .003,
-    }));
+  let W, H, pts;
+  const N = 90, LINK = 150, MR = 130, MF = 1.2;
+  const mouse = { x: -9999, y: -9999 };
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
   }
-  function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    stars.forEach(s => {
-      s.a = Math.max(.1, Math.min(1, s.a + s.s));
-      if (s.a <= .1 || s.a >= 1) s.s *= -1;
-      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255,120,180,${s.a.toFixed(2)})`; ctx.fill();
+
+  function rand(a, b) { return Math.random() * (b - a) + a; }
+
+  function make() {
+    pts = Array.from({ length: N }, (_, i) => {
+      const big = i < 12;
+      return {
+        x: rand(0, W), y: rand(0, H),
+        vx: rand(-0.12, 0.12), vy: rand(-0.12, 0.12),
+        r: big ? rand(2.2, 3.8) : rand(0.8, 1.8),
+        pulse: rand(0, Math.PI * 2),
+        ps: rand(0.012, 0.028),
+        alpha: rand(0.4, 1),
+        big,
+        hue: Math.random() < 0.75 ? 0 : Math.random() < 0.5 ? 330 : 350,
+      };
     });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    for (const p of pts) {
+      // mouse repulsion
+      const dx = p.x - mouse.x, dy = p.y - mouse.y;
+      const d2 = dx * dx + dy * dy;
+      if (d2 < MR * MR && d2 > 0) {
+        const d = Math.sqrt(d2);
+        const f = ((MR - d) / MR) * MF;
+        p.vx += (dx / d) * f * 0.06;
+        p.vy += (dy / d) * f * 0.06;
+      }
+      p.vx *= 0.988; p.vy *= 0.988;
+      const spd = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+      if (spd > 0.5) { p.vx = (p.vx / spd) * 0.5; p.vy = (p.vy / spd) * 0.5; }
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < -20) p.x = W + 20; if (p.x > W + 20) p.x = -20;
+      if (p.y < -20) p.y = H + 20; if (p.y > H + 20) p.y = -20;
+      p.pulse += p.ps;
+    }
+
+    // connection lines
+    for (let i = 0; i < N; i++) {
+      for (let j = i + 1; j < N; j++) {
+        const a = pts[i], b = pts[j];
+        const dx = a.x - b.x, dy = a.y - b.y;
+        const d = Math.sqrt(dx * dx + dy * dy);
+        if (d < LINK) {
+          ctx.strokeStyle = `rgba(232,25,110,${((1 - d / LINK) * 0.18).toFixed(3)})`;
+          ctx.lineWidth = 0.6;
+          ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        }
+      }
+    }
+
+    // particles
+    for (const p of pts) {
+      const r = p.r + Math.sin(p.pulse) * 0.5;
+      const a = p.alpha * (0.7 + Math.sin(p.pulse * 0.7) * 0.3);
+
+      if (p.big) {
+        const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 5);
+        g.addColorStop(0, `rgba(232,25,110,${(a * 0.5).toFixed(3)})`);
+        g.addColorStop(1, 'rgba(232,25,110,0)');
+        ctx.beginPath(); ctx.arc(p.x, p.y, r * 5, 0, Math.PI * 2);
+        ctx.fillStyle = g; ctx.fill();
+      }
+
+      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+      ctx.fillStyle = `hsla(${p.hue},${p.hue === 0 ? 90 : 80}%,${p.hue === 0 ? 62 : 72}%,${a.toFixed(3)})`;
+      ctx.fill();
+    }
+
     requestAnimationFrame(draw);
   }
-  resize(); makeStars(); draw();
-  window.addEventListener("resize", () => { resize(); makeStars(); });
+
+  resize(); make(); draw();
+  window.addEventListener("resize", () => { resize(); make(); });
+  window.addEventListener("mousemove", e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+  window.addEventListener("mouseleave", () => { mouse.x = -9999; mouse.y = -9999; });
 }
 
 // ── Version ──────────────────────────────
