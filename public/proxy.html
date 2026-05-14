@@ -17,25 +17,31 @@
   </style>
   <div class="spinner"></div>
   <div id="status" style="font-size:14px">loading proxy…</div>
+  <div id="debug" style="font-size:11px;color:#555;max-width:400px;text-align:center"></div>
   <script src="/uv/uv.bundle.js"></script>
   <script src="/uv/uv.config.js"></script>
   <script>
     (async function() {
       var status = document.getElementById('status');
+      var debug  = document.getElementById('debug');
       try {
+        debug.textContent = 'registering SW…';
         var reg = await navigator.serviceWorker.register('/uv/sw.js', { scope: '/service/' });
         // serviceWorker.ready only resolves for SWs controlling the current page,
         // but our SW scope is /service/ not /proxy.html — wait on the registration directly
         if (!reg.active) {
+          debug.textContent = 'installing SW…';
           await new Promise(function(resolve, reject) {
             var worker = reg.installing || reg.waiting;
             if (!worker) { resolve(); return; }
             worker.addEventListener('statechange', function(e) {
+              debug.textContent = 'SW state: ' + e.target.state;
               if (e.target.state === 'activated') resolve();
               if (e.target.state === 'redundant') reject(new Error('SW install failed'));
             });
           });
         }
+        debug.textContent = 'SW active — navigating…';
         var url = new URLSearchParams(location.search).get('url') || 'https://google.com';
         if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
         location.replace(__uv$config.prefix + __uv$config.encodeUrl(url));
