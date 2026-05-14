@@ -68,6 +68,7 @@
     Service-Worker-Allowed = "/"
     Cross-Origin-Opener-Policy = "same-origin"
     Cross-Origin-Embedder-Policy = "require-corp"
+    Cache-Control = "no-cache, no-store, must-revalidate"
 
 [[headers]]
   for = "/service/*"
