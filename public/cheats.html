@@ -60,8 +60,17 @@
   var frame  = document.getElementById('blooket-frame');
   status.textContent = 'starting proxy...';
   try {
-    await navigator.serviceWorker.register('/uv/sw.js', { scope: '/service/' });
-    await navigator.serviceWorker.ready;
+    var reg = await navigator.serviceWorker.register('/uv/sw.js', { scope: '/service/' });
+    if (!reg.active) {
+      await new Promise(function(resolve, reject) {
+        var worker = reg.installing || reg.waiting;
+        if (!worker) { resolve(); return; }
+        worker.addEventListener('statechange', function(e) {
+          if (e.target.state === 'activated') resolve();
+          if (e.target.state === 'redundant') reject(new Error('SW install failed'));
+        });
+      });
+    }
     frame.src = __uv$config.prefix + __uv$config.encodeUrl('https://www.blooket.com');
     status.textContent = 'blooket loading — wait for it, then use cheats';
   } catch(e) {

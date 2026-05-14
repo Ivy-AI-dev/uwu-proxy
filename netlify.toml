@@ -48,6 +48,16 @@
   status = 200
 
 [[redirects]]
+  from = "/bare"
+  to = "/.netlify/functions/bare"
+  status = 200
+
+[[redirects]]
+  from = "/bare/"
+  to = "/.netlify/functions/bare"
+  status = 200
+
+[[redirects]]
   from = "/bare/*"
   to = "/.netlify/functions/bare"
   status = 200

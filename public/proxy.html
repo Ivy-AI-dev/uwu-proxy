@@ -23,8 +23,19 @@
     (async function() {
       var status = document.getElementById('status');
       try {
-        await navigator.serviceWorker.register('/uv/sw.js', { scope: '/service/' });
-        await navigator.serviceWorker.ready;
+        var reg = await navigator.serviceWorker.register('/uv/sw.js', { scope: '/service/' });
+        // serviceWorker.ready only resolves for SWs controlling the current page,
+        // but our SW scope is /service/ not /proxy.html — wait on the registration directly
+        if (!reg.active) {
+          await new Promise(function(resolve, reject) {
+            var worker = reg.installing || reg.waiting;
+            if (!worker) { resolve(); return; }
+            worker.addEventListener('statechange', function(e) {
+              if (e.target.state === 'activated') resolve();
+              if (e.target.state === 'redundant') reject(new Error('SW install failed'));
+            });
+          });
+        }
         var url = new URLSearchParams(location.search).get('url') || 'https://google.com';
         if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
         location.replace(__uv$config.prefix + __uv$config.encodeUrl(url));
