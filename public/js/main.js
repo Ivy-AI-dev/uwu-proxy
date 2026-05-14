@@ -1,6 +1,6 @@
-/* Uwu Gaming — main.js v2.0 */
+/* Uwu Gaming — main.js v2.1 */
 
-const VERSION = "2.0.0";
+const VERSION = "2.1";
 
 // ── Apps data ────────────────────────────
 const APPS = [
