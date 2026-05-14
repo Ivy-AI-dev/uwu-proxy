@@ -238,12 +238,6 @@
       <div class="stat-card"><div class="stat-num" id="stat-uploads">—</div><div class="stat-label">Uploads</div></div>
     </div>
 
-    <!-- DB Banner -->
-    <div class="db-banner">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
-      <p><strong>Database not connected.</strong> Connect a Supabase or Upstash database to unlock login history, play counts, analytics, and persistent user management. Add <code>DATABASE_URL</code> to your Netlify environment variables.</p>
-    </div>
-
     <!-- Tabs -->
     <div class="admin-tabs">
       <button class="admin-tab active" data-tab="users">Users</button>
@@ -490,7 +484,14 @@
 
   window.removeUser = async function(user) {
     if (!confirm('Remove user "' + user + '"? This cannot be undone.')) return;
-    window.toast && window.toast('database required to remove users', 'error');
+    try {
+      var res = await fetch('/api/auth-codes', { method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ actorCode: adminCode, user, action: 'delete' }) });
+      var d = await res.json();
+      if (!res.ok) { window.toast && window.toast(d.error || 'error', 'error'); return; }
+      window.toast && window.toast('user removed', 'success');
+      loadUsers(); loadStats();
+    } catch(e) { window.toast && window.toast('error: ' + e.message, 'error'); }
   };
 
   // Add user toggle
@@ -598,7 +599,7 @@
     g.category = document.getElementById('edit-cat').value;
     g.tag      = g.category;
     g.icon     = document.getElementById('edit-icon').value.trim();
-    window.toast && window.toast('saved locally — database required for persistence', 'success');
+    window.toast && window.toast('saved!', 'success');
     document.getElementById('edit-modal').classList.remove('open');
     renderGamesAdmin();
   });
