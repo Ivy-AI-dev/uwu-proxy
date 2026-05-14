@@ -16,7 +16,7 @@ export const handler = async (event) => {
     return {
       statusCode: 200,
       headers: { ...CORS, "content-type": "application/json" },
-      body: JSON.stringify({ versions: ["v2"], language: "JavaScript", memoryUsage: 0, maintainer: {}, project: { name: "uwu-gaming", version: "2.0.0" } }),
+      body: JSON.stringify({ versions: ["v1", "v2"], language: "JavaScript", memoryUsage: 0, maintainer: {}, project: { name: "uwu-gaming", version: "2.0.0" } }),
     };
   }
 
