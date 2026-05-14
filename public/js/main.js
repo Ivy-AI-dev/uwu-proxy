@@ -99,12 +99,9 @@ function buildSidebar() {
 
   nav.innerHTML = `
     <a href="/" class="sb-logo" title="Uwu Gaming">
-      <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
-        <rect width="30" height="30" rx="8" fill="#e8196e"/>
-        <rect x="4.5" y="10" width="21" height="12" rx="4" fill="white" fill-opacity=".15" stroke="white" stroke-width="1.4"/>
-        <path d="M9 16h3.5m-1.75-1.75v3.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
-        <circle cx="21" cy="14.5" r="1.3" fill="white"/>
-        <circle cx="18.8" cy="16.8" r="1.3" fill="white"/>
+      <svg width="34" height="34" viewBox="0 0 48 48" fill="none">
+        <rect width="48" height="48" rx="14" fill="#e8196e"/>
+        <path d="M14 13 L14 27 Q14 35 24 35 Q34 35 34 27 L34 13" stroke="white" stroke-width="5" stroke-linecap="round" fill="none"/>
       </svg>
     </a>
     ${SIDEBAR_LINKS.map(l => `<a href="${l.path}" class="sb-btn${cur === l.path ? " active" : ""}" title="${l.title}">${l.icon}</a>`).join("")}
