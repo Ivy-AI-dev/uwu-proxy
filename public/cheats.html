@@ -7,6 +7,8 @@
   <link rel="icon" href="/img/game-icon.svg" />
   <link rel="stylesheet" href="/css/style.css" />
   <script>(function(){var s=localStorage.getItem('uwu_session');if(!s)return location.replace('/login.html');try{var d=JSON.parse(s);if(!d.user||Date.now()-d.loginTime>7*24*60*60*1000){localStorage.removeItem('uwu_session');location.replace('/login.html');}}catch{location.replace('/login.html');}})()</script>
+  <script src="/uv/uv.bundle.js"></script>
+  <script src="/uv/uv.config.js"></script>
 </head>
 <body>
 <canvas id="stars-canvas"></canvas>
@@ -18,7 +20,7 @@
   </div>
   <div class="cheats-layout">
     <div class="cheats-frame-wrap">
-      <iframe id="blooket-frame" src="https://www.blooket.com" allowfullscreen></iframe>
+      <iframe id="blooket-frame" src="about:blank" allowfullscreen allow="fullscreen;autoplay;clipboard-write"></iframe>
     </div>
     <div class="cheats-panel">
       <h3>Blooket Tools</h3>
@@ -52,84 +54,102 @@
 <div class="toast-container" id="toast-container"></div>
 <script src="/js/main.js" type="module"></script>
 <script>
+// ── Boot: register SW then load Blooket through UV proxy ──────────────────
+(async function() {
+  var status = document.getElementById('cheat-status');
+  var frame  = document.getElementById('blooket-frame');
+  status.textContent = 'starting proxy...';
+  try {
+    if (!navigator.serviceWorker.controller) {
+      await navigator.serviceWorker.register('/uv/sw.js', { scope: '/service/' });
+      await new Promise(function(r) { navigator.serviceWorker.addEventListener('controllerchange', r, { once: true }); });
+    }
+    frame.src = __uv$config.prefix + __uv$config.encodeUrl('https://www.blooket.com');
+    status.textContent = 'blooket loading — wait for the page, then use cheats';
+  } catch(e) {
+    status.textContent = 'proxy error: ' + e.message;
+  }
+})();
+
+// ── Cheat scripts (run inside the proxied frame via eval) ─────────────────
 const SCRIPTS = {
   flood: `
     var amt = prompt("How many bots? (max 100)", "20");
-    if (!amt) return;
+    if (!amt) { void 0; } else {
     amt = Math.min(parseInt(amt)||20, 100);
     var gameCode = prompt("Enter Blooket game code:");
-    if (!gameCode) return;
-    var names = ["xXProGamer","NotARobot","TotallyHuman","BlooketBot","GigaChad","NPC_"+Math.floor(Math.random()*9999)];
-    var status = document.getElementById ? document.getElementById('cheat-status') : null;
+    if (!gameCode) { void 0; } else {
+    var names = ["xXProGamer","NotARobot","TotallyHuman","BlooketBot","GigaChad","NPC"+Math.floor(Math.random()*9999)];
+    var statusEl = window.parent && window.parent.document.getElementById('cheat-status');
     var joined = 0;
-    async function joinBot(n) {
+    async function joinOne(n) {
       try {
-        var r = await fetch("https://fb.blooket.com/c/SFuBbV5nxv9V1pFd8q4c/joinGame",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({gameCode:gameCode,name:names[Math.floor(Math.random()*names.length)]+"_"+n})});
-        if (r.ok) joined++;
+        var r = await fetch("https://fb.blooket.com/c/SFuBbV5nxv9V1pFd8q4c/joinGame",{
+          method:"PUT", headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({gameCode:gameCode, name:names[n%names.length]+"_"+n})
+        });
+        if(r.ok) joined++;
       } catch(e){}
     }
-    for(var i=0;i<amt;i++) joinBot(i);
-    setTimeout(()=>{ if(status) status.textContent = "sent "+amt+" bots!"; }, 1500);
+    for(var i=0;i<amt;i++) joinOne(i);
+    setTimeout(function(){ if(statusEl) statusEl.textContent = "sent "+amt+" bots (joined: "+joined+")"; }, 2000);
+    }}
   `,
   answer: `
-    var status = window.parent.document.getElementById('cheat-status');
-    if(status) status.textContent = 'auto-answer active';
-    setInterval(function(){
-      var btns = document.querySelectorAll('[class*="answer"],[class*="Answer"],[class*="option"],[class*="Option"]');
-      if(btns.length){
-        var correct = Array.from(btns).find(b=>b.style.background&&b.style.background.includes('green'))||btns[0];
-        if(correct) correct.click();
-      }
-    }, 300);
+    var statusEl = window.parent && window.parent.document.getElementById('cheat-status');
+    if(statusEl) statusEl.textContent = 'auto-answer running...';
+    if(window.__answerInterval) clearInterval(window.__answerInterval);
+    window.__answerInterval = setInterval(function(){
+      var btns = Array.from(document.querySelectorAll('[class*="AnswerBtn"],[class*="answerBtn"],[class*="answer"],[class*="Answer"],[class*="option"],[class*="Option"]'));
+      if(!btns.length) return;
+      var correct = btns.find(function(b){
+        return (b.style.background||'').includes('green') || (b.className||'').toLowerCase().includes('correct');
+      });
+      (correct || btns[0]).click();
+    }, 400);
   `,
   tokens: `
-    var status = window.parent.document.getElementById('cheat-status');
+    var statusEl = window.parent && window.parent.document.getElementById('cheat-status');
     var added = 0;
-    setInterval(function(){
-      try {
-        var state = window.__reactFiber$||window._react;
-        var inp = document.querySelector('[class*="token"],[class*="Token"]');
-        if(inp){ inp.click(); added++; }
-        if(status && added%10===0) status.textContent = 'tokens: +'+added;
-      } catch(e){}
-    }, 200);
-  `,
-  blooks: `
-    var status = window.parent.document.getElementById('cheat-status');
-    if(status) status.textContent = 'attempting blook unlock...';
-    var keys = Object.keys(localStorage).filter(k=>k.includes('blook')||k.includes('Blook'));
-    console.log('Blook keys found:', keys);
-    if(status) status.textContent = keys.length ? 'found '+keys.length+' blook keys' : 'no blook data found here';
+    if(window.__tokenInterval) clearInterval(window.__tokenInterval);
+    window.__tokenInterval = setInterval(function(){
+      var btns = Array.from(document.querySelectorAll('[class*="Token"],[class*="token"],[class*="Coin"],[class*="coin"]'));
+      btns.forEach(function(b){ try{b.click();added++;}catch(e){} });
+      if(statusEl && added%20===0 && added>0) statusEl.textContent = 'tokens clicked: '+added;
+    }, 250);
+    if(statusEl) statusEl.textContent = 'token farm active';
   `,
   speed: `
-    var status = window.parent.document.getElementById('cheat-status');
-    window.__origSetTimeout = window.setTimeout;
-    window.setTimeout = function(fn,ms,...a){ return window.__origSetTimeout(fn,Math.min(ms,50),...a); };
-    window.__origSetInterval = window.setInterval;
-    window.setInterval = function(fn,ms,...a){ return window.__origSetInterval(fn,Math.min(ms,50),...a); };
-    if(status) status.textContent = 'speed hack active';
+    var statusEl = window.parent && window.parent.document.getElementById('cheat-status');
+    if(!window.__speedActive){
+      window.__speedActive = true;
+      var _st = window.setTimeout, _si = window.setInterval;
+      window.setTimeout  = function(fn,ms){ return _st(fn, Math.min(ms||0, 1)); };
+      window.setInterval = function(fn,ms){ return _si(fn, Math.max(Math.min(ms||0,50),16)); };
+    }
+    if(statusEl) statusEl.textContent = 'speed hack active';
   `,
 };
 
 function injectScript(name) {
-  var frame = document.getElementById('blooket-frame');
+  var frame  = document.getElementById('blooket-frame');
   var status = document.getElementById('cheat-status');
-  if (!frame || !frame.contentWindow) {
-    status.textContent = 'frame not ready';
-    return;
-  }
+  if (!frame || !frame.contentWindow) { status.textContent = 'frame not ready'; return; }
   try {
     frame.contentWindow.eval(SCRIPTS[name] || '');
-    status.textContent = name + ' injected!';
+    if (name !== 'flood') status.textContent = name + ' injected!';
   } catch(e) {
-    status.textContent = 'blocked (CORS) — open blooket.com first';
+    status.textContent = 'still loading — wait for Blooket to fully open';
     console.warn('inject error:', e);
   }
 }
 
 function reloadFrame() {
   var frame = document.getElementById('blooket-frame');
-  if (frame) { frame.src = 'https://www.blooket.com'; document.getElementById('cheat-status').textContent = 'reloaded'; }
+  if (!frame) return;
+  try { frame.src = __uv$config.prefix + __uv$config.encodeUrl('https://www.blooket.com'); }
+  catch(e) { frame.src = 'https://www.blooket.com'; }
+  document.getElementById('cheat-status').textContent = 'reloading...';
 }
 </script>
 </body>
