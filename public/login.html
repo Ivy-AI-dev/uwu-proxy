@@ -12,12 +12,9 @@
 <div class="login-wrap">
   <div class="login-box">
     <div class="login-logo">
-      <svg width="64" height="64" viewBox="0 0 30 30" fill="none">
-        <rect width="30" height="30" rx="8" fill="#e8196e"/>
-        <rect x="4.5" y="10" width="21" height="12" rx="4" fill="white" fill-opacity=".15" stroke="white" stroke-width="1.4"/>
-        <path d="M9 16h3.5m-1.75-1.75v3.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
-        <circle cx="21" cy="14.5" r="1.3" fill="white"/>
-        <circle cx="18.8" cy="16.8" r="1.3" fill="white"/>
+      <svg width="72" height="72" viewBox="0 0 48 48" fill="none">
+        <rect width="48" height="48" rx="14" fill="#e8196e"/>
+        <path d="M14 13 L14 27 Q14 35 24 35 Q34 35 34 27 L34 13" stroke="white" stroke-width="5" stroke-linecap="round" fill="none"/>
       </svg>
     </div>
     <div class="login-title">Uwu Gaming</div>
@@ -34,21 +31,30 @@
     var btn   = document.getElementById('login-btn');
     var err   = document.getElementById('login-error');
 
-    async function tryLogin() {
-      var code = input.value.trim();
+    async function tryLogin(code) {
+      code = code || input.value.trim();
       if (code.length !== 5) { err.textContent = 'code must be 5 digits'; return; }
       btn.disabled = true; err.textContent = '';
       try {
         var res  = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ code }) });
         var data = await res.json();
-        if (!res.ok) { err.textContent = data.error || 'wrong code'; btn.disabled = false; return; }
+        if (!res.ok) {
+          localStorage.removeItem('uwu_code');
+          err.textContent = data.error || 'wrong code';
+          btn.disabled = false;
+          return;
+        }
+        localStorage.setItem('uwu_code', code);
         localStorage.setItem('uwu_session', JSON.stringify({ user: data.user, role: data.role, channel: data.channel, loginTime: Date.now() }));
         location.replace('/');
       } catch(e) { err.textContent = 'connection error'; btn.disabled = false; }
     }
 
-    btn.addEventListener('click', tryLogin);
+    btn.addEventListener('click', function() { tryLogin(); });
     input.addEventListener('keydown', function(e) { if (e.key === 'Enter') tryLogin(); });
+
+    var saved = localStorage.getItem('uwu_code');
+    if (saved) { input.value = saved; tryLogin(saved); }
   })();
 </script>
 </body>
