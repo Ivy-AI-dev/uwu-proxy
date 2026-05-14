@@ -10,9 +10,12 @@ export const handler = async (event) => {
     return { statusCode: 200, headers: CORS, body: "" };
   }
 
-  const xBareUrl = event.headers["x-bare-url"];
+  const host     = event.headers["x-bare-host"];
+  const port     = event.headers["x-bare-port"];
+  const protocol = event.headers["x-bare-protocol"];
+  const path     = event.headers["x-bare-path"];
 
-  if ((event.httpMethod === "GET" || event.httpMethod === "HEAD") && !xBareUrl) {
+  if (!host) {
     return {
       statusCode: 200,
       headers: { ...CORS, "content-type": "application/json" },
@@ -20,9 +23,8 @@ export const handler = async (event) => {
     };
   }
 
-  if (!xBareUrl) {
-    return { statusCode: 400, headers: { ...CORS, "content-type": "application/json" }, body: JSON.stringify({ code: "MISSING_BARE_URL", id: "err", message: "X-Bare-Url required" }) };
-  }
+  const portSuffix = port ? `:${port}` : "";
+  const targetUrl  = `${protocol}//${host}${portSuffix}${path}`;
 
   let reqHeaders = {};
   try { reqHeaders = JSON.parse(event.headers["x-bare-headers"] || "{}"); } catch {}
@@ -41,7 +43,7 @@ export const handler = async (event) => {
       fetchOpts.body = event.isBase64Encoded ? Buffer.from(event.body, "base64") : event.body;
     }
 
-    const upstream = await fetch(xBareUrl, fetchOpts);
+    const upstream = await fetch(targetUrl, fetchOpts);
     const resHdrs  = {};
     upstream.headers.forEach((v, k) => { resHdrs[k] = v; });
 
