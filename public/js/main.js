@@ -99,10 +99,12 @@ function buildSidebar() {
 
   nav.innerHTML = `
     <a href="/" class="sb-logo" title="Uwu Gaming">
-      <svg width="22" height="18" viewBox="0 0 20 16" fill="none">
-        <circle cx="6" cy="7" r="3" fill="white"/>
-        <circle cx="14" cy="7" r="3" fill="white"/>
-        <path d="M5 12 Q10 15.5 15 12" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+      <svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+        <rect width="30" height="30" rx="8" fill="#e8196e"/>
+        <rect x="4.5" y="10" width="21" height="12" rx="4" fill="white" fill-opacity=".15" stroke="white" stroke-width="1.4"/>
+        <path d="M9 16h3.5m-1.75-1.75v3.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+        <circle cx="21" cy="14.5" r="1.3" fill="white"/>
+        <circle cx="18.8" cy="16.8" r="1.3" fill="white"/>
       </svg>
     </a>
     ${SIDEBAR_LINKS.map(l => `<a href="${l.path}" class="sb-btn${cur === l.path ? " active" : ""}" title="${l.title}">${l.icon}</a>`).join("")}
@@ -125,6 +127,23 @@ function faviconUrl(siteUrl) {
   catch { return ""; }
 }
 
+// ── Game thumbnail (gradient per category) ─
+const THUMB_GRADIENTS = {
+  action:  "linear-gradient(135deg,#e8196e 0%,#ff5e35 100%)",
+  classic: "linear-gradient(135deg,#7c3aed 0%,#db2777 100%)",
+  casual:  "linear-gradient(135deg,#0ea5e9 0%,#6366f1 100%)",
+  io:      "linear-gradient(135deg,#059669 0%,#0ea5e9 100%)",
+  puzzle:  "linear-gradient(135deg,#d97706 0%,#dc2626 100%)",
+};
+function gameThumbHtml(game) {
+  if (!game.url || !game.url.startsWith("/")) {
+    return `<img src="${escHtml(faviconUrl(game.url))}" alt="" loading="lazy" onerror="this.style.opacity=0" />`;
+  }
+  const grad   = THUMB_GRADIENTS[game.category] || THUMB_GRADIENTS.casual;
+  const letter = (game.name || "?").charAt(0).toUpperCase();
+  return `<div class="game-thumb-inner" style="background:${grad}"><span class="game-thumb-letter">${escHtml(letter)}</span></div>`;
+}
+
 // ── Escape HTML ──────────────────────────
 function escHtml(s) {
   return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
@@ -138,7 +157,7 @@ function renderQuickGames() {
   if (!items.length) { el.innerHTML = '<div style="color:var(--text3);font-size:14px">no games yet — upload some in admin</div>'; return; }
   el.innerHTML = items.map(g => `
     <div class="card" data-url="${escHtml(g.url)}" data-name="${escHtml(g.name)}" style="cursor:pointer">
-      <div class="card-favicon"><img src="${escHtml(faviconUrl(g.url))}" alt="" loading="lazy" onerror="this.style.opacity=0" /></div>
+      <div class="card-favicon">${g.url && g.url.startsWith("/") ? `<div style="width:32px;height:32px;border-radius:8px;background:${THUMB_GRADIENTS[g.category]||THUMB_GRADIENTS.casual};display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:rgba(255,255,255,.6)">${escHtml((g.name||"?").charAt(0).toUpperCase())}</div>` : `<img src="${escHtml(faviconUrl(g.url))}" alt="" loading="lazy" onerror="this.style.opacity=0" />`}</div>
       <div class="card-name">${escHtml(g.name)}</div>
       <div class="card-desc">${escHtml(g.desc)}</div>
       <div class="card-tag tag-${g.tag}">${g.tag}</div>
@@ -169,7 +188,7 @@ function renderGames(filter = "all") {
   }
   grid.innerHTML = list.map(g => `
     <div class="game-card" data-url="${escHtml(g.url)}" data-name="${escHtml(g.name)}">
-      <div class="game-thumb"><img src="${escHtml(faviconUrl(g.url))}" alt="${escHtml(g.name)}" loading="lazy" onerror="this.style.opacity=0" /></div>
+      <div class="game-thumb">${gameThumbHtml(g)}</div>
       <div class="game-info">
         <div class="game-name">${escHtml(g.name)}</div>
         <div class="game-desc">${escHtml(g.desc)}</div>
