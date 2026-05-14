@@ -37,7 +37,8 @@ async function loadGames() {
     GAMES = data.map(g => ({
       name:     String(g.name || ""),
       url:      String(g.url  || `/games/${g.slug}/index.html`),
-      icon:     g.icon || "",
+      icon:     g.icon  || "",
+      color:    g.color || "",
       tag:      g.category || g.tag || "casual",
       category: g.category || g.tag || "casual",
       desc:     String(g.desc || ""),
@@ -125,21 +126,22 @@ function faviconUrl(siteUrl) {
   catch { return ""; }
 }
 
-// ── Game thumbnail (gradient per category) ─
-const THUMB_GRADIENTS = {
-  action:  "linear-gradient(135deg,#e8196e 0%,#ff5e35 100%)",
-  classic: "linear-gradient(135deg,#7c3aed 0%,#db2777 100%)",
-  casual:  "linear-gradient(135deg,#0ea5e9 0%,#6366f1 100%)",
-  io:      "linear-gradient(135deg,#059669 0%,#0ea5e9 100%)",
-  puzzle:  "linear-gradient(135deg,#d97706 0%,#dc2626 100%)",
+// ── Game thumbnail ────────────────────────
+const CATEGORY_GRAD = {
+  action:  "linear-gradient(135deg,#e8196e,#ff5e35)",
+  classic: "linear-gradient(135deg,#7c3aed,#db2777)",
+  casual:  "linear-gradient(135deg,#0ea5e9,#6366f1)",
+  io:      "linear-gradient(135deg,#059669,#0ea5e9)",
+  puzzle:  "linear-gradient(135deg,#d97706,#dc2626)",
 };
+const THUMB_GRADIENTS = CATEGORY_GRAD;
 function gameThumbHtml(game) {
-  const grad   = THUMB_GRADIENTS[game.category] || THUMB_GRADIENTS.casual;
+  const grad   = game.color || CATEGORY_GRAD[game.category] || CATEGORY_GRAD.casual;
   const letter = (game.name || "?").charAt(0).toUpperCase();
-  const fallbackDiv = `<div class="game-thumb-inner" style="background:${grad};display:none"><span class="game-thumb-letter">${escHtml(letter)}</span></div>`;
-  const iconUrl = game.icon || (!game.url?.startsWith("/") ? faviconUrl(game.url) : "");
+  const fallback = `<div class="game-thumb-inner" style="background:${grad};display:none"><span class="game-thumb-letter">${escHtml(letter)}</span></div>`;
+  const iconUrl  = game.icon || (!game.url?.startsWith("/") ? faviconUrl(game.url) : "");
   if (!iconUrl) return `<div class="game-thumb-inner" style="background:${grad}"><span class="game-thumb-letter">${escHtml(letter)}</span></div>`;
-  return `<img src="${escHtml(iconUrl)}" alt="" loading="lazy" class="game-thumb-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />${fallbackDiv}`;
+  return `<img src="${escHtml(iconUrl)}" alt="" loading="lazy" class="game-thumb-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />${fallback}`;
 }
 
 // ── Escape HTML ──────────────────────────
@@ -154,7 +156,7 @@ function renderQuickGames() {
   const items = GAMES.slice(0, 6);
   if (!items.length) { el.innerHTML = '<div style="color:var(--text3);font-size:14px">no games yet — upload some in admin</div>'; return; }
   el.innerHTML = items.map(g => {
-    const grad   = THUMB_GRADIENTS[g.category] || THUMB_GRADIENTS.casual;
+    const grad   = g.color || CATEGORY_GRAD[g.category] || CATEGORY_GRAD.casual;
     const letter = (g.name||"?").charAt(0).toUpperCase();
     const iconUrl = g.icon || (!g.url?.startsWith("/") ? faviconUrl(g.url) : "");
     const iconHtml = iconUrl
