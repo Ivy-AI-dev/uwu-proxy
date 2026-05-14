@@ -113,6 +113,14 @@ function openGameOverlay(url,name){var o=document.getElementById('game-overlay')
 function closeGameOverlay(){var o=document.getElementById('game-overlay');if(!o)return;document.getElementById('go-frame').src='';o.style.display='none';document.body.style.overflow='';}
 window.addEventListener('popstate',function(){var o=document.getElementById('game-overlay');if(o&&o.style.display!=='none')closeGameOverlay();});
 </script>
+<script>
+// Force-update any stale service worker so new UV bundle takes effect
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(function(regs) {
+    regs.forEach(function(r) { r.update(); });
+  });
+}
+</script>
 <script src="/js/main.js" type="module"></script>
 </body>
 </html>

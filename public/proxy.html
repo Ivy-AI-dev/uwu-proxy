@@ -8,45 +8,66 @@
 <body style="background:#0a0a0a;display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:18px;color:#888;font-family:sans-serif">
   <style>
     @keyframes spin { to { transform: rotate(360deg); } }
-    .spinner {
-      width: 36px; height: 36px; border-radius: 50%;
-      border: 3px solid #222;
-      border-top-color: #e8196e;
-      animation: spin .8s linear infinite;
-    }
+    .spinner { width:36px;height:36px;border-radius:50%;border:3px solid #222;border-top-color:#e8196e;animation:spin .8s linear infinite; }
+    .clear-btn { margin-top:8px;padding:8px 20px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#888;font-size:12px;cursor:pointer; }
+    .clear-btn:hover { border-color:#e8196e;color:#e8196e; }
   </style>
-  <div class="spinner"></div>
+  <div class="spinner" id="spinner"></div>
   <div id="status" style="font-size:14px">loading proxy…</div>
   <div id="debug" style="font-size:11px;color:#555;max-width:400px;text-align:center"></div>
+  <button class="clear-btn" id="clear-btn" style="display:none" onclick="clearCache()">clear cache &amp; reload</button>
   <script src="/uv/uv.bundle.js"></script>
   <script src="/uv/uv.config.js"></script>
   <script>
+    async function clearCache() {
+      var regs = await navigator.serviceWorker.getRegistrations();
+      for (var r of regs) await r.unregister();
+      var keys = await caches.keys();
+      for (var k of keys) await caches.delete(k);
+      location.reload();
+    }
+
     (async function() {
       var status = document.getElementById('status');
       var debug  = document.getElementById('debug');
+      var btn    = document.getElementById('clear-btn');
       try {
+        // Unregister any old SW first so we always get the latest bundle
+        var existing = await navigator.serviceWorker.getRegistration('/service/');
+        if (existing) {
+          var installed = existing.installing || existing.waiting;
+          var isCurrent = existing.active && (existing.active.scriptURL || '').includes('/uv/sw.js');
+          if (installed) {
+            // New SW waiting — force it in
+            await existing.update();
+          }
+        }
+
         debug.textContent = 'registering SW…';
         var reg = await navigator.serviceWorker.register('/uv/sw.js', { scope: '/service/' });
-        // serviceWorker.ready only resolves for SWs controlling the current page,
-        // but our SW scope is /service/ not /proxy.html — wait on the registration directly
+
         if (!reg.active) {
           debug.textContent = 'installing SW…';
           await new Promise(function(resolve, reject) {
             var worker = reg.installing || reg.waiting;
             if (!worker) { resolve(); return; }
             worker.addEventListener('statechange', function(e) {
-              debug.textContent = 'SW state: ' + e.target.state;
+              debug.textContent = 'SW: ' + e.target.state;
               if (e.target.state === 'activated') resolve();
               if (e.target.state === 'redundant') reject(new Error('SW install failed'));
             });
           });
         }
-        debug.textContent = 'SW active — navigating…';
+
+        debug.textContent = '';
         var url = new URLSearchParams(location.search).get('url') || 'https://google.com';
         if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
         location.replace(__uv$config.prefix + __uv$config.encodeUrl(url));
       } catch(e) {
+        document.getElementById('spinner').style.display = 'none';
         status.textContent = 'proxy error: ' + e.message;
+        debug.textContent = 'try clearing the cache below';
+        btn.style.display = 'block';
       }
     })();
   </script>
