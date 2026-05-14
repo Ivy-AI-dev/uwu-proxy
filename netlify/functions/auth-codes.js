@@ -10,79 +10,48 @@ const DEFAULTS = [
   { user: 'Gibson',  code: '55555', role: 'slave' },
 ];
 
-const JSON_HEADERS = { 'Content-Type': 'application/json' };
+const HDR = { 'Content-Type': 'application/json' };
+
+async function mergedUsers(db) {
+  const { rows } = await db.query('SELECT username, code, role FROM users');
+  return DEFAULTS.map(d => {
+    const found = rows.find(r => r.username === d.user);
+    return found ? { user: found.username, code: found.code, role: found.role } : d;
+  }).concat(rows.filter(r => !DEFAULTS.find(d => d.user === r.username))
+               .map(r => ({ user: r.username, code: r.code, role: r.role })));
+}
 
 export const handler = async (event) => {
-  const db = await getDb();
-
-  // GET — return all users
-  if (event.httpMethod === 'GET') {
-    let users;
-    if (db) {
-      const docs = await db.collection('users').find({}).toArray();
-      // merge defaults with DB overrides
-      users = DEFAULTS.map(d => {
-        const found = docs.find(x => x.user === d.user);
-        return found ? { user: found.user, code: found.code, role: found.role } : d;
-      });
-      // include any DB-only users not in defaults
-      for (const doc of docs) {
-        if (!DEFAULTS.find(d => d.user === doc.user)) {
-          users.push({ user: doc.user, code: doc.code, role: doc.role });
-        }
-      }
-    } else {
-      const overrides = globalThis.__codeOverrides || {};
-      users = DEFAULTS.map(u => ({ user: u.user, role: u.role, code: overrides[u.user] || u.code }));
-    }
-    return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ users }) };
+  let db;
+  try { db = await getDb(); } catch (e) {
+    return { statusCode: 500, body: JSON.stringify({ error: 'db connect failed' }) };
   }
 
-  // POST — update or add a user's code
+  if (event.httpMethod === 'GET') {
+    const users = await mergedUsers(db);
+    return { statusCode: 200, headers: HDR, body: JSON.stringify({ users }) };
+  }
+
   if (event.httpMethod === 'POST') {
     let body;
     try { body = JSON.parse(event.body); } catch { return { statusCode: 400, body: JSON.stringify({ error: 'bad json' }) }; }
     const { actorCode, user, code, role, action } = body;
 
-    // resolve actor
-    let actor;
-    if (db) {
-      const all = await db.collection('users').find({}).toArray();
-      const merged = DEFAULTS.map(d => {
-        const f = all.find(x => x.user === d.user);
-        return f || d;
-      });
-      actor = merged.find(u => u.code === String(actorCode));
-    } else {
-      const overrides = globalThis.__codeOverrides || {};
-      actor = DEFAULTS.find(u => (overrides[u.user] || u.code) === String(actorCode));
-    }
+    const all = await mergedUsers(db);
+    const actor = all.find(u => u.code === String(actorCode));
     if (!actor || actor.role !== 'owner') return { statusCode: 403, body: JSON.stringify({ error: 'owner only' }) };
 
-    // delete action
     if (action === 'delete') {
-      if (db) {
-        await db.collection('users').deleteOne({ user });
-      } else {
-        const overrides = globalThis.__codeOverrides || {};
-        delete overrides[user];
-      }
-      return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ ok: true }) };
+      await db.query('DELETE FROM users WHERE username = $1', [user]);
+      return { statusCode: 200, headers: HDR, body: JSON.stringify({ ok: true }) };
     }
 
-    // add or update
     if (!/^\d{5}$/.test(code)) return { statusCode: 400, body: JSON.stringify({ error: 'code must be 5 digits' }) };
-    if (db) {
-      await db.collection('users').updateOne(
-        { user },
-        { $set: { user, code: String(code), role: role || 'slave' } },
-        { upsert: true }
-      );
-    } else {
-      if (!globalThis.__codeOverrides) globalThis.__codeOverrides = {};
-      globalThis.__codeOverrides[user] = code;
-    }
-    return { statusCode: 200, headers: JSON_HEADERS, body: JSON.stringify({ ok: true }) };
+    await db.query(
+      'INSERT INTO users (username, code, role) VALUES ($1, $2, $3) ON CONFLICT (username) DO UPDATE SET code = $2, role = $3',
+      [user, String(code), role || 'slave']
+    );
+    return { statusCode: 200, headers: HDR, body: JSON.stringify({ ok: true }) };
   }
 
   return { statusCode: 405, body: 'Method Not Allowed' };

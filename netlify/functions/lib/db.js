@@ -1,12 +1,20 @@
-import { MongoClient } from 'mongodb';
+import pg from 'pg';
+const { Pool } = pg;
 
-let client;
+const CONNECTION = 'postgresql://postgres:Ryderbobbitt1212@db.jorrltrnvvtmehslnxst.supabase.co:5432/postgres';
+
+let pool;
 
 export async function getDb() {
-  if (!process.env.MONGODB_URI) return null;
-  if (!client) {
-    client = new MongoClient(process.env.MONGODB_URI);
-    await client.connect();
+  if (!pool) {
+    pool = new Pool({ connectionString: CONNECTION, ssl: { rejectUnauthorized: false } });
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        username TEXT PRIMARY KEY,
+        code     TEXT NOT NULL,
+        role     TEXT NOT NULL DEFAULT 'slave'
+      )
+    `);
   }
-  return client.db('uwugaming');
+  return pool;
 }
