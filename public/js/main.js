@@ -133,12 +133,12 @@ const THUMB_GRADIENTS = {
   puzzle:  "linear-gradient(135deg,#d97706 0%,#dc2626 100%)",
 };
 function gameThumbHtml(game) {
-  if (!game.url || !game.url.startsWith("/")) {
-    return `<img src="${escHtml(faviconUrl(game.url))}" alt="" loading="lazy" onerror="this.style.opacity=0" />`;
-  }
   const grad   = THUMB_GRADIENTS[game.category] || THUMB_GRADIENTS.casual;
   const letter = (game.name || "?").charAt(0).toUpperCase();
-  return `<div class="game-thumb-inner" style="background:${grad}"><span class="game-thumb-letter">${escHtml(letter)}</span></div>`;
+  const fallbackDiv = `<div class="game-thumb-inner" style="background:${grad}"><span class="game-thumb-letter">${escHtml(letter)}</span></div>`;
+  const iconUrl = game.icon || (!game.url?.startsWith("/") ? faviconUrl(game.url) : "");
+  if (!iconUrl) return fallbackDiv;
+  return `<img src="${escHtml(iconUrl)}" alt="" loading="lazy" class="game-thumb-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" />${fallbackDiv.replace('style="', 'style="display:none;')}`;
 }
 
 // ── Escape HTML ──────────────────────────
@@ -152,13 +152,21 @@ function renderQuickGames() {
   if (!el) return;
   const items = GAMES.slice(0, 6);
   if (!items.length) { el.innerHTML = '<div style="color:var(--text3);font-size:14px">no games yet — upload some in admin</div>'; return; }
-  el.innerHTML = items.map(g => `
+  el.innerHTML = items.map(g => {
+    const grad   = THUMB_GRADIENTS[g.category] || THUMB_GRADIENTS.casual;
+    const letter = (g.name||"?").charAt(0).toUpperCase();
+    const iconUrl = g.icon || (!g.url?.startsWith("/") ? faviconUrl(g.url) : "");
+    const iconHtml = iconUrl
+      ? `<img src="${escHtml(iconUrl)}" alt="" loading="lazy" style="width:32px;height:32px;border-radius:8px;object-fit:cover" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><div style="display:none;width:32px;height:32px;border-radius:8px;background:${grad};align-items:center;justify-content:center;font-size:16px;font-weight:900;color:rgba(255,255,255,.6)">${escHtml(letter)}</div>`
+      : `<div style="width:32px;height:32px;border-radius:8px;background:${grad};display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:rgba(255,255,255,.6)">${escHtml(letter)}</div>`;
+    return `
     <div class="card" data-url="${escHtml(g.url)}" data-name="${escHtml(g.name)}" style="cursor:pointer">
-      <div class="card-favicon">${g.url && g.url.startsWith("/") ? `<div style="width:32px;height:32px;border-radius:8px;background:${THUMB_GRADIENTS[g.category]||THUMB_GRADIENTS.casual};display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:rgba(255,255,255,.6)">${escHtml((g.name||"?").charAt(0).toUpperCase())}</div>` : `<img src="${escHtml(faviconUrl(g.url))}" alt="" loading="lazy" onerror="this.style.opacity=0" />`}</div>
+      <div class="card-favicon">${iconHtml}</div>
       <div class="card-name">${escHtml(g.name)}</div>
       <div class="card-desc">${escHtml(g.desc)}</div>
       <div class="card-tag tag-${g.tag}">${g.tag}</div>
-    </div>`).join("");
+    </div>`;
+  }).join("");
   el.querySelectorAll(".card").forEach(c => c.addEventListener("click", () => openGame(c.dataset.url, c.dataset.name)));
 }
 
