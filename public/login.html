@@ -6,56 +6,179 @@
   <title>Uwu Gaming — Login</title>
   <link rel="icon" href="/img/game-icon.svg" />
   <link rel="stylesheet" href="/css/style.css" />
+  <style>
+    .login-wrap {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .login-box {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 22px; padding: 36px 32px 32px;
+      width: 100%; max-width: 320px;
+      display: flex; flex-direction: column; align-items: center; gap: 0;
+    }
+    .login-logo { margin-bottom: 16px; }
+    .login-title { font-size: 22px; font-weight: 900; letter-spacing: -0.5px; margin-bottom: 4px; }
+    .login-sub { font-size: 13px; color: var(--text2); margin-bottom: 24px; text-align: center; }
+
+    /* ── PIN display ── */
+    .pin-display {
+      display: flex; gap: 14px; justify-content: center;
+      margin-bottom: 28px;
+    }
+    .pin-dot {
+      width: 14px; height: 14px; border-radius: 50%;
+      border: 2px solid var(--border);
+      background: transparent;
+      transition: background .12s, border-color .12s;
+    }
+    .pin-dot.filled {
+      background: var(--accent);
+      border-color: var(--accent);
+      box-shadow: 0 0 8px rgba(232,25,110,.4);
+    }
+
+    /* ── PIN pad ── */
+    .pin-pad {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 10px; width: 100%; max-width: 280px;
+    }
+    .pin-key {
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text);
+      font-size: 22px; font-weight: 600; font-family: inherit;
+      padding: 16px 0; cursor: pointer;
+      transition: background .1s, border-color .1s, transform .08s;
+      user-select: none;
+    }
+    .pin-key:hover  { background: var(--bg2); border-color: var(--text3); }
+    .pin-key:active { transform: scale(.93); }
+    .pin-key.back   { font-size: 18px; color: var(--text2); }
+    .pin-key.go {
+      background: var(--accent); border-color: var(--accent);
+      font-size: 14px; font-weight: 700; color: #fff;
+    }
+    .pin-key.go:hover { opacity: .85; }
+    .pin-key.go:disabled { opacity: .4; cursor: default; transform: none; }
+
+    .login-error {
+      min-height: 20px; font-size: 13px; color: var(--accent);
+      text-align: center; margin-top: 14px;
+    }
+  </style>
 </head>
 <body>
 <canvas id="stars-canvas"></canvas>
 <div class="login-wrap">
   <div class="login-box">
     <div class="login-logo">
-      <svg width="72" height="72" viewBox="0 0 48 48" fill="none">
+      <svg width="64" height="64" viewBox="0 0 48 48" fill="none">
         <rect width="48" height="48" rx="14" fill="#e8196e"/>
         <path d="M14 13 L14 27 Q14 35 24 35 Q34 35 34 27 L34 13" stroke="white" stroke-width="5" stroke-linecap="round" fill="none"/>
       </svg>
     </div>
     <div class="login-title">Uwu Gaming</div>
-    <div class="login-sub">Enter your access code to continue</div>
-    <input class="login-input" id="code-input" type="password" inputmode="numeric" maxlength="5" placeholder="·····" autocomplete="off" />
-    <button class="login-btn" id="login-btn">Enter</button>
+    <div class="login-sub">Enter your 5-digit code</div>
+
+    <div class="pin-display">
+      <div class="pin-dot" id="d0"></div>
+      <div class="pin-dot" id="d1"></div>
+      <div class="pin-dot" id="d2"></div>
+      <div class="pin-dot" id="d3"></div>
+      <div class="pin-dot" id="d4"></div>
+    </div>
+
+    <div class="pin-pad">
+      <button class="pin-key" onclick="padKey('1')">1</button>
+      <button class="pin-key" onclick="padKey('2')">2</button>
+      <button class="pin-key" onclick="padKey('3')">3</button>
+      <button class="pin-key" onclick="padKey('4')">4</button>
+      <button class="pin-key" onclick="padKey('5')">5</button>
+      <button class="pin-key" onclick="padKey('6')">6</button>
+      <button class="pin-key" onclick="padKey('7')">7</button>
+      <button class="pin-key" onclick="padKey('8')">8</button>
+      <button class="pin-key" onclick="padKey('9')">9</button>
+      <button class="pin-key back" onclick="padBack()">⌫</button>
+      <button class="pin-key" onclick="padKey('0')">0</button>
+      <button class="pin-key go" id="login-btn" disabled>↵</button>
+    </div>
+
     <div class="login-error" id="login-error"></div>
   </div>
 </div>
 <script src="/js/main.js" type="module"></script>
 <script>
-  (function() {
-    var input = document.getElementById('code-input');
-    var btn   = document.getElementById('login-btn');
-    var err   = document.getElementById('login-error');
+(function() {
+  var pin = '';
+  var busy = false;
+  var err  = document.getElementById('login-error');
+  var btn  = document.getElementById('login-btn');
 
-    async function tryLogin(code) {
-      code = code || input.value.trim();
-      if (code.length !== 5) { err.textContent = 'code must be 5 digits'; return; }
-      btn.disabled = true; err.textContent = '';
-      try {
-        var res  = await fetch('/api/auth', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ code }) });
-        var data = await res.json();
-        if (!res.ok) {
-          localStorage.removeItem('uwu_code');
-          err.textContent = data.error || 'wrong code';
-          btn.disabled = false;
-          return;
-        }
-        localStorage.setItem('uwu_code', code);
-        localStorage.setItem('uwu_session', JSON.stringify({ user: data.user, role: data.role, channel: data.channel, loginTime: Date.now() }));
-        location.replace('/');
-      } catch(e) { err.textContent = 'connection error'; btn.disabled = false; }
+  function updateDisplay() {
+    for (var i = 0; i < 5; i++) {
+      document.getElementById('d' + i).classList.toggle('filled', i < pin.length);
     }
+    btn.disabled = pin.length !== 5 || busy;
+  }
 
-    btn.addEventListener('click', function() { tryLogin(); });
-    input.addEventListener('keydown', function(e) { if (e.key === 'Enter') tryLogin(); });
+  window.padKey = function(k) {
+    if (pin.length >= 5 || busy) return;
+    pin += k;
+    updateDisplay();
+    if (pin.length === 5) tryLogin();
+  };
 
-    var saved = localStorage.getItem('uwu_code');
-    if (saved) { input.value = saved; tryLogin(saved); }
-  })();
+  window.padBack = function() {
+    if (busy) return;
+    pin = pin.slice(0, -1);
+    err.textContent = '';
+    updateDisplay();
+  };
+
+  // Keyboard support
+  document.addEventListener('keydown', function(e) {
+    if (busy) return;
+    if (e.key >= '0' && e.key <= '9') { padKey(e.key); }
+    else if (e.key === 'Backspace') { padBack(); }
+    else if (e.key === 'Enter' && pin.length === 5) { tryLogin(); }
+  });
+
+  btn.addEventListener('click', tryLogin);
+
+  async function tryLogin() {
+    if (pin.length !== 5 || busy) return;
+    busy = true; btn.disabled = true; err.textContent = '';
+    try {
+      var res  = await fetch('/api/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: pin }) });
+      var data = await res.json();
+      if (!res.ok) {
+        err.textContent = data.error || 'wrong code';
+        pin = ''; updateDisplay();
+        busy = false;
+        // brief shake animation on dots
+        document.querySelector('.pin-display').animate(
+          [{transform:'translateX(-6px)'},{transform:'translateX(6px)'},{transform:'translateX(0)'}],
+          {duration:300,iterations:2}
+        );
+        return;
+      }
+      localStorage.setItem('uwu_code', pin);
+      localStorage.setItem('uwu_session', JSON.stringify({ user: data.user, role: data.role, channel: data.channel, loginTime: Date.now() }));
+      location.replace('/');
+    } catch(e) {
+      err.textContent = 'connection error';
+      busy = false; btn.disabled = false;
+    }
+  }
+
+  // Auto-login from saved code
+  var saved = localStorage.getItem('uwu_code');
+  if (saved && /^\d{5}$/.test(saved)) {
+    pin = saved;
+    updateDisplay();
+    setTimeout(tryLogin, 100);
+  }
+})();
 </script>
 </body>
 </html>

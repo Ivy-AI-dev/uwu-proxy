@@ -24,7 +24,7 @@
     </div>
     <div class="cheats-panel">
       <h3>Blooket Tools</h3>
-      <p>Open a Blooket game in the frame, then use these buttons.</p>
+      <p>Wait for Blooket to fully load, then use these buttons.</p>
 
       <div style="height:1px;background:var(--border);margin:4px 0"></div>
 
@@ -38,10 +38,10 @@
 
       <button class="cheat-btn danger" onclick="reloadFrame()">Reload</button>
 
-      <div class="cheat-status" id="cheat-status">ready</div>
+      <div class="cheat-status" id="cheat-status">starting proxy…</div>
 
       <div style="height:1px;background:var(--border);margin:4px 0"></div>
-      <p style="font-size:11px;color:var(--text3)">Scripts inject into the Blooket frame. Some may only work during a live game.</p>
+      <p style="font-size:11px;color:var(--text3)">If a security check appears, wait — it completes on its own. Scripts inject into the Blooket frame and only work during a live game (except Blooks).</p>
     </div>
   </div>
 </main>
@@ -58,28 +58,34 @@
 (async function() {
   var status = document.getElementById('cheat-status');
   var frame  = document.getElementById('blooket-frame');
-  status.textContent = 'starting proxy...';
   try {
     var reg = await navigator.serviceWorker.register('/uv/sw.js', { scope: '/service/' });
+
     if (!reg.active) {
+      status.textContent = 'installing proxy…';
       await new Promise(function(resolve, reject) {
-        var worker = reg.installing || reg.waiting;
-        if (!worker) { resolve(); return; }
-        worker.addEventListener('statechange', function(e) {
-          if (e.target.state === 'activated') resolve();
-          if (e.target.state === 'redundant') reject(new Error('SW install failed'));
-        });
+        var timeout = setTimeout(function() { reject(new Error('proxy install timed out')); }, 15000);
+        function watch(worker) {
+          worker.addEventListener('statechange', function() {
+            if (worker.state === 'activated') { clearTimeout(timeout); resolve(); }
+            if (worker.state === 'redundant')  { clearTimeout(timeout); reject(new Error('proxy install failed')); }
+          });
+        }
+        if (reg.installing) { watch(reg.installing); return; }
+        if (reg.waiting)    { watch(reg.waiting);    return; }
+        reg.addEventListener('updatefound', function() { watch(reg.installing); });
       });
     }
+
+    status.textContent = 'blooket loading — if a security check appears, just wait…';
     frame.src = __uv$config.prefix + __uv$config.encodeUrl('https://www.blooket.com');
-    status.textContent = 'blooket loading — wait for it, then use cheats';
   } catch(e) {
     status.textContent = 'proxy error: ' + e.message;
     frame.src = 'https://www.blooket.com';
   }
 })();
 
-// ── Cheat scripts (run inside the proxied frame via eval) ─────────────────
+// ── Cheat scripts ─────────────────────────────────────────────────────────
 const SCRIPTS = {
   flood: `
     var amt = prompt("How many bots? (max 100)", "20");
@@ -105,7 +111,7 @@ const SCRIPTS = {
   `,
   answer: `
     var statusEl = window.parent && window.parent.document.getElementById('cheat-status');
-    if(statusEl) statusEl.textContent = 'auto-answer running...';
+    if(statusEl) statusEl.textContent = 'auto-answer running…';
     if(window.__answerInterval) clearInterval(window.__answerInterval);
     window.__answerInterval = setInterval(function(){
       var btns = Array.from(document.querySelectorAll('[class*="AnswerBtn"],[class*="answerBtn"],[class*="answer"],[class*="Answer"],[class*="option"],[class*="Option"]'));
@@ -127,6 +133,29 @@ const SCRIPTS = {
     }, 250);
     if(statusEl) statusEl.textContent = 'token farm active';
   `,
+  blooks: `
+    var statusEl = window.parent && window.parent.document.getElementById('cheat-status');
+    try {
+      var ALL_BLOOKS = ["Frog","Cat","Dog","Owl","Sloth","Panda","Deer","Narwhal","Bunny","Bear",
+        "Fox","Hamster","Horse","Chick","Elephant","Pig","Hedgehog","Baby Dragon","Duck","Bat",
+        "Crab","Ghost","Shark","Whale","Spider","Mummy","Zombie","Werewolf","Vampire","Tim",
+        "Snowman","Elf","Reindeer","Santa Claus","Baby Penguin","Baby Chick","Baby Duck",
+        "Ice Cube","Love Bug","Cupid","Leprechaun","Trophy","Sunflower","Bumblebee",
+        "Caterpillar","Leaf","Ladybug","Rainbow","Thunderbolt","Globe","Rocket","UFO",
+        "Planet","Astronaut","Comet","Moon","Star","Sun","Cloud","Raindrop","Snowflake",
+        "Fossil","Crystal","Diamond","Gem","Gold Bar","Coin","Bill","Raven","Bats",
+        "Black Cat","Cauldron","Spiderella","Lovely","King","Queen"];
+      var raw = localStorage.getItem('userData');
+      if (!raw) { if(statusEl) statusEl.textContent = 'blooks: log in to Blooket first'; }
+      else {
+        var data = JSON.parse(raw);
+        if (!data.blooks) data.blooks = {};
+        ALL_BLOOKS.forEach(function(b){ if(!data.blooks[b]) data.blooks[b] = 1; });
+        localStorage.setItem('userData', JSON.stringify(data));
+        if(statusEl) statusEl.textContent = 'blooks unlocked! refresh the Blooket page';
+      }
+    } catch(e) { if(statusEl) statusEl.textContent = 'blooks error: ' + e.message; }
+  `,
   speed: `
     var statusEl = window.parent && window.parent.document.getElementById('cheat-status');
     if(!window.__speedActive){
@@ -147,7 +176,7 @@ function injectScript(name) {
     frame.contentWindow.eval(SCRIPTS[name] || '');
     if (name !== 'flood') status.textContent = name + ' injected!';
   } catch(e) {
-    status.textContent = 'still loading — wait for Blooket to fully open';
+    status.textContent = 'not ready — wait for Blooket to fully load';
     console.warn('inject error:', e);
   }
 }
@@ -155,9 +184,9 @@ function injectScript(name) {
 function reloadFrame() {
   var frame = document.getElementById('blooket-frame');
   if (!frame) return;
+  document.getElementById('cheat-status').textContent = 'reloading…';
   try { frame.src = __uv$config.prefix + __uv$config.encodeUrl('https://www.blooket.com'); }
   catch(e) { frame.src = 'https://www.blooket.com'; }
-  document.getElementById('cheat-status').textContent = 'reloading...';
 }
 </script>
 </body>
