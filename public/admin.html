@@ -243,6 +243,7 @@
       <button class="admin-tab active" data-tab="users">Users</button>
       <button class="admin-tab" data-tab="games">Games</button>
       <button class="admin-tab" data-tab="upload">Upload</button>
+      <button class="admin-tab" data-tab="announce">Announce</button>
     </div>
 
     <!-- ── USERS TAB ── -->
@@ -351,6 +352,51 @@
         </div>
       </div>
     </div>
+
+    <!-- ── ANNOUNCE TAB ── -->
+    <div class="tab-pane" id="tab-announce">
+      <div class="section-head"><h2>Global Announce</h2></div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+
+        <!-- Send form -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:24px;display:flex;flex-direction:column;gap:14px">
+          <div class="form-group">
+            <label class="form-label">Message</label>
+            <input class="setting-input" id="ann-text" placeholder="e.g. GOTCHA 😂" />
+          </div>
+          <div style="display:flex;gap:16px;align-items:center">
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+              <input type="checkbox" id="ann-sound" style="accent-color:var(--accent);width:16px;height:16px" checked />
+              Play sound
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+              <input type="checkbox" id="ann-cam" style="accent-color:var(--accent);width:16px;height:16px" />
+              Activate cam
+            </label>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="btn-primary" id="ann-send-btn" style="flex:1;padding:10px">Send to Everyone</button>
+            <button class="btn-danger" id="ann-clear-btn" style="padding:10px 16px">Clear</button>
+          </div>
+          <div id="ann-status" style="font-size:12px;color:var(--text2);min-height:16px"></div>
+        </div>
+
+        <!-- Cam snapshot viewer -->
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:24px;display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <h3 style="font-size:14px;font-weight:700;margin:0">Cam Snapshot</h3>
+            <span id="snap-user" style="font-size:12px;color:var(--text2)">—</span>
+          </div>
+          <div id="snap-wrap" style="border-radius:10px;overflow:hidden;background:var(--bg3);min-height:180px;display:flex;align-items:center;justify-content:center">
+            <span id="snap-empty" style="color:var(--text3);font-size:13px">No snapshot yet</span>
+            <img id="snap-img" src="" alt="cam snapshot" style="display:none;width:100%;border-radius:10px" />
+          </div>
+          <div id="snap-ts" style="font-size:11px;color:var(--text3)"></div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </main>
 
@@ -675,6 +721,65 @@
   });
 
   function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  // ── Announce ──
+  var annStatus = document.getElementById('ann-status');
+  var snapImg   = document.getElementById('snap-img');
+  var snapEmpty = document.getElementById('snap-empty');
+  var snapUser  = document.getElementById('snap-user');
+  var snapTs    = document.getElementById('snap-ts');
+
+  document.getElementById('ann-send-btn').addEventListener('click', async function() {
+    var text  = document.getElementById('ann-text').value.trim();
+    var sound = document.getElementById('ann-sound').checked;
+    var cam   = document.getElementById('ann-cam').checked;
+    if (!text && !sound && !cam) { annStatus.textContent = 'nothing to send'; return; }
+    try {
+      var res = await fetch('/api/announce', { method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ actorCode: adminCode, text, sound, cam }) });
+      var d = await res.json();
+      annStatus.textContent = res.ok ? 'sent!' : (d.error || 'error');
+    } catch(e) { annStatus.textContent = 'error: ' + e.message; }
+  });
+
+  document.getElementById('ann-clear-btn').addEventListener('click', async function() {
+    try {
+      var res = await fetch('/api/announce', { method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ actorCode: adminCode, clear: true }) });
+      var d = await res.json();
+      annStatus.textContent = res.ok ? 'cleared' : (d.error || 'error');
+      snapImg.style.display = 'none'; snapEmpty.style.display = '';
+      snapUser.textContent = '—'; snapTs.textContent = '';
+    } catch(e) { annStatus.textContent = 'error: ' + e.message; }
+  });
+
+  async function pollSnapshot() {
+    try {
+      var res = await fetch('/api/announce/snapshot');
+      if (!res.ok) return;
+      var data = await res.json();
+      if (!data || !data.imageData) return;
+      snapImg.src = data.imageData;
+      snapImg.style.display = 'block';
+      snapEmpty.style.display = 'none';
+      snapUser.textContent = data.user || '?';
+      snapTs.textContent = data.ts ? new Date(data.ts).toLocaleTimeString() : '';
+    } catch {}
+  }
+
+  // Poll for snapshots every 3s when on the announce tab
+  var snapPoll = null;
+  document.querySelectorAll('.admin-tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      if (tab.dataset.tab === 'announce') {
+        pollSnapshot();
+        if (!snapPoll) snapPoll = setInterval(pollSnapshot, 3000);
+      } else {
+        if (snapPoll) { clearInterval(snapPoll); snapPoll = null; }
+      }
+    });
+  });
+
 })();
 </script>
 </body>

