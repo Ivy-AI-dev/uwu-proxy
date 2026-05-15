@@ -20,12 +20,15 @@ export const handler = async (event) => {
   try {
     const db = await getDb();
     const { rows } = await db.query('SELECT username, code, role FROM users');
+    const deleted = new Set(rows.filter(r => r.role === 'deleted').map(r => r.username));
     const all = [
-      ...DEFAULTS.map(d => {
-        const f = rows.find(r => r.username === d.user);
-        return f ? { user: f.username, code: f.code, role: f.role } : d;
-      }),
-      ...rows.filter(r => !DEFAULTS.find(d => d.user === r.username)).map(r => ({ user: r.username, code: r.code, role: r.role })),
+      ...DEFAULTS
+        .filter(d => !deleted.has(d.user))
+        .map(d => {
+          const f = rows.find(r => r.username === d.user && r.role !== 'deleted');
+          return f ? { user: f.username, code: f.code, role: f.role } : d;
+        }),
+      ...rows.filter(r => r.role !== 'deleted' && !DEFAULTS.find(d => d.user === r.username)).map(r => ({ user: r.username, code: r.code, role: r.role })),
     ];
     user = all.find(u => u.code === String(code));
   } catch {

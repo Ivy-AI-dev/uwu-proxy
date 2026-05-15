@@ -14,10 +14,14 @@ const HDR = { 'Content-Type': 'application/json' };
 
 async function mergedUsers(db) {
   const { rows } = await db.query('SELECT username, code, role FROM users');
-  return DEFAULTS.map(d => {
-    const found = rows.find(r => r.username === d.user);
-    return found ? { user: found.username, code: found.code, role: found.role } : d;
-  }).concat(rows.filter(r => !DEFAULTS.find(d => d.user === r.username))
+  const deleted = new Set(rows.filter(r => r.role === 'deleted').map(r => r.username));
+  return DEFAULTS
+    .filter(d => !deleted.has(d.user))
+    .map(d => {
+      const found = rows.find(r => r.username === d.user && r.role !== 'deleted');
+      return found ? { user: found.username, code: found.code, role: found.role } : d;
+    })
+    .concat(rows.filter(r => r.role !== 'deleted' && !DEFAULTS.find(d => d.user === r.username))
                .map(r => ({ user: r.username, code: r.code, role: r.role })));
 }
 
@@ -49,8 +53,21 @@ export const handler = async (event) => {
     if (!actor || actor.role !== 'owner') return { statusCode: 403, body: JSON.stringify({ error: 'owner only' }) };
 
     if (action === 'delete') {
-      if (db) await db.query('DELETE FROM users WHERE username = $1', [user]);
-      else { if (globalThis.__codeOverrides) delete globalThis.__codeOverrides[user]; }
+      if (db) {
+        const isDefault = DEFAULTS.find(d => d.user === user);
+        if (isDefault) {
+          // mark deleted so mergedUsers() suppresses it — can't truly remove a hardcoded default
+          await db.query(
+            'INSERT INTO users (username, code, role) VALUES ($1, $2, $3) ON CONFLICT (username) DO UPDATE SET role = $3',
+            [user, isDefault.code, 'deleted']
+          );
+        } else {
+          await db.query('DELETE FROM users WHERE username = $1', [user]);
+        }
+      } else {
+        if (!globalThis.__deletedUsers) globalThis.__deletedUsers = new Set();
+        globalThis.__deletedUsers.add(user);
+      }
       return { statusCode: 200, headers: HDR, body: JSON.stringify({ ok: true }) };
     }
 
