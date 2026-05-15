@@ -1,4 +1,4 @@
-import { getDb } from './lib/db.js';
+import { getRows, upsertRow, deleteRow } from './lib/store.js';
 
 const DEFAULTS = [
   { user: 'Ryder',   code: '82047', role: 'owner' },
@@ -12,29 +12,28 @@ const DEFAULTS = [
 
 const HDR = { 'Content-Type': 'application/json' };
 
-async function mergedUsers(db) {
-  const { rows } = await db.query('SELECT username, code, role FROM users');
-  const deleted = new Set(rows.filter(r => r.role === 'deleted').map(r => r.username));
+async function mergedUsers() {
+  const rows = await getRows();
+  const deleted = new Set(
+    Object.entries(rows).filter(([, v]) => v.role === 'deleted').map(([k]) => k)
+  );
   return DEFAULTS
     .filter(d => !deleted.has(d.user))
     .map(d => {
-      const found = rows.find(r => r.username === d.user && r.role !== 'deleted');
-      return found ? { user: found.username, code: found.code, role: found.role } : d;
+      const ov = rows[d.user];
+      return (ov && ov.role !== 'deleted') ? { user: d.user, code: ov.code, role: ov.role } : d;
     })
-    .concat(rows.filter(r => r.role !== 'deleted' && !DEFAULTS.find(d => d.user === r.username))
-               .map(r => ({ user: r.username, code: r.code, role: r.role })));
+    .concat(
+      Object.entries(rows)
+        .filter(([k, v]) => v.role !== 'deleted' && !DEFAULTS.find(d => d.user === k))
+        .map(([k, v]) => ({ user: k, code: v.code, role: v.role }))
+    );
 }
 
 export const handler = async (event) => {
-  let db = null;
-  try { db = await getDb(); } catch (e) { /* fall back to in-memory */ }
-
   if (event.httpMethod === 'GET') {
     try {
-      const users = db ? await mergedUsers(db) : DEFAULTS.map(d => {
-        const ov = globalThis.__codeOverrides?.[d.user];
-        return ov ? { ...d, code: ov } : d;
-      });
+      const users = await mergedUsers();
       return { statusCode: 200, headers: HDR, body: JSON.stringify({ users }) };
     } catch (e) {
       return { statusCode: 200, headers: HDR, body: JSON.stringify({ users: DEFAULTS }) };
@@ -47,45 +46,29 @@ export const handler = async (event) => {
     const { actorCode, user, code, role, action } = body;
 
     let all;
-    try { all = db ? await mergedUsers(db) : DEFAULTS; } catch { all = DEFAULTS; }
+    try { all = await mergedUsers(); } catch { all = DEFAULTS; }
     const actor = all.find(u => u.code === String(actorCode));
     if (!actor || actor.role !== 'owner') return { statusCode: 403, body: JSON.stringify({ error: 'owner only' }) };
 
     if (action === 'delete') {
       try {
-        if (db) {
-          const isDefault = DEFAULTS.find(d => d.user === user);
-          if (isDefault) {
-            await db.query(
-              'INSERT INTO users (username, code, role) VALUES ($1, $2, $3) ON CONFLICT (username) DO UPDATE SET role = $3',
-              [user, isDefault.code, 'deleted']
-            );
-          } else {
-            await db.query('DELETE FROM users WHERE username = $1', [user]);
-          }
+        const isDefault = DEFAULTS.find(d => d.user === user);
+        if (isDefault) {
+          await upsertRow(user, isDefault.code, 'deleted');
         } else {
-          if (!globalThis.__deletedUsers) globalThis.__deletedUsers = new Set();
-          globalThis.__deletedUsers.add(user);
+          await deleteRow(user);
         }
       } catch (e) {
-        return { statusCode: 500, headers: HDR, body: JSON.stringify({ error: 'db error: ' + e.message }) };
+        return { statusCode: 500, headers: HDR, body: JSON.stringify({ error: 'store error: ' + e.message }) };
       }
       return { statusCode: 200, headers: HDR, body: JSON.stringify({ ok: true }) };
     }
 
     if (!/^\d{5}$/.test(code)) return { statusCode: 400, body: JSON.stringify({ error: 'code must be 5 digits' }) };
     try {
-      if (db) {
-        await db.query(
-          'INSERT INTO users (username, code, role) VALUES ($1, $2, $3) ON CONFLICT (username) DO UPDATE SET code = $2, role = $3',
-          [user, String(code), role || 'slave']
-        );
-      } else {
-        if (!globalThis.__codeOverrides) globalThis.__codeOverrides = {};
-        globalThis.__codeOverrides[user] = code;
-      }
+      await upsertRow(user, String(code), role || 'slave');
     } catch (e) {
-      return { statusCode: 500, headers: HDR, body: JSON.stringify({ error: 'db error: ' + e.message }) };
+      return { statusCode: 500, headers: HDR, body: JSON.stringify({ error: 'store error: ' + e.message }) };
     }
     return { statusCode: 200, headers: HDR, body: JSON.stringify({ ok: true }) };
   }

@@ -1,4 +1,4 @@
-import { getDb } from './lib/db.js';
+import { getRows } from './lib/store.js';
 
 const DEFAULTS = [
   { user: 'Ryder',   code: '82047', role: 'owner' },
@@ -18,17 +18,20 @@ export const handler = async (event) => {
 
   let user;
   try {
-    const db = await getDb();
-    const { rows } = await db.query('SELECT username, code, role FROM users');
-    const deleted = new Set(rows.filter(r => r.role === 'deleted').map(r => r.username));
+    const rows = await getRows();
+    const deleted = new Set(
+      Object.entries(rows).filter(([, v]) => v.role === 'deleted').map(([k]) => k)
+    );
     const all = [
       ...DEFAULTS
         .filter(d => !deleted.has(d.user))
         .map(d => {
-          const f = rows.find(r => r.username === d.user && r.role !== 'deleted');
-          return f ? { user: f.username, code: f.code, role: f.role } : d;
+          const ov = rows[d.user];
+          return (ov && ov.role !== 'deleted') ? { user: d.user, code: ov.code, role: ov.role } : d;
         }),
-      ...rows.filter(r => r.role !== 'deleted' && !DEFAULTS.find(d => d.user === r.username)).map(r => ({ user: r.username, code: r.code, role: r.role })),
+      ...Object.entries(rows)
+        .filter(([k, v]) => v.role !== 'deleted' && !DEFAULTS.find(d => d.user === k))
+        .map(([k, v]) => ({ user: k, code: v.code, role: v.role })),
     ];
     user = all.find(u => u.code === String(code));
   } catch {
