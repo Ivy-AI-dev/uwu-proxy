@@ -1,7 +1,7 @@
 import pg from 'pg';
 const { Pool } = pg;
 
-const CONNECTION = 'postgresql://postgres:Ryderbobbitt1212@db.jorrltrnvvtmehslnxst.supabase.co:5432/postgres';
+const CONNECTION = 'postgresql://postgres:RyderBobbitt121@db.wyydvzdntrtfwgiejzuz.supabase.co:5432/postgres';
 
 let pool;
 
