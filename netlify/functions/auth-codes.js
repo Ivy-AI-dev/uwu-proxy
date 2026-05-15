@@ -37,8 +37,7 @@ export const handler = async (event) => {
       });
       return { statusCode: 200, headers: HDR, body: JSON.stringify({ users }) };
     } catch (e) {
-      const users = DEFAULTS;
-      return { statusCode: 200, headers: HDR, body: JSON.stringify({ users }) };
+      return { statusCode: 200, headers: HDR, body: JSON.stringify({ users: DEFAULTS }) };
     }
   }
 
@@ -53,33 +52,40 @@ export const handler = async (event) => {
     if (!actor || actor.role !== 'owner') return { statusCode: 403, body: JSON.stringify({ error: 'owner only' }) };
 
     if (action === 'delete') {
-      if (db) {
-        const isDefault = DEFAULTS.find(d => d.user === user);
-        if (isDefault) {
-          // mark deleted so mergedUsers() suppresses it — can't truly remove a hardcoded default
-          await db.query(
-            'INSERT INTO users (username, code, role) VALUES ($1, $2, $3) ON CONFLICT (username) DO UPDATE SET role = $3',
-            [user, isDefault.code, 'deleted']
-          );
+      try {
+        if (db) {
+          const isDefault = DEFAULTS.find(d => d.user === user);
+          if (isDefault) {
+            await db.query(
+              'INSERT INTO users (username, code, role) VALUES ($1, $2, $3) ON CONFLICT (username) DO UPDATE SET role = $3',
+              [user, isDefault.code, 'deleted']
+            );
+          } else {
+            await db.query('DELETE FROM users WHERE username = $1', [user]);
+          }
         } else {
-          await db.query('DELETE FROM users WHERE username = $1', [user]);
+          if (!globalThis.__deletedUsers) globalThis.__deletedUsers = new Set();
+          globalThis.__deletedUsers.add(user);
         }
-      } else {
-        if (!globalThis.__deletedUsers) globalThis.__deletedUsers = new Set();
-        globalThis.__deletedUsers.add(user);
+      } catch (e) {
+        return { statusCode: 500, headers: HDR, body: JSON.stringify({ error: 'db error: ' + e.message }) };
       }
       return { statusCode: 200, headers: HDR, body: JSON.stringify({ ok: true }) };
     }
 
     if (!/^\d{5}$/.test(code)) return { statusCode: 400, body: JSON.stringify({ error: 'code must be 5 digits' }) };
-    if (db) {
-      await db.query(
-        'INSERT INTO users (username, code, role) VALUES ($1, $2, $3) ON CONFLICT (username) DO UPDATE SET code = $2, role = $3',
-        [user, String(code), role || 'slave']
-      );
-    } else {
-      if (!globalThis.__codeOverrides) globalThis.__codeOverrides = {};
-      globalThis.__codeOverrides[user] = code;
+    try {
+      if (db) {
+        await db.query(
+          'INSERT INTO users (username, code, role) VALUES ($1, $2, $3) ON CONFLICT (username) DO UPDATE SET code = $2, role = $3',
+          [user, String(code), role || 'slave']
+        );
+      } else {
+        if (!globalThis.__codeOverrides) globalThis.__codeOverrides = {};
+        globalThis.__codeOverrides[user] = code;
+      }
+    } catch (e) {
+      return { statusCode: 500, headers: HDR, body: JSON.stringify({ error: 'db error: ' + e.message }) };
     }
     return { statusCode: 200, headers: HDR, body: JSON.stringify({ ok: true }) };
   }
