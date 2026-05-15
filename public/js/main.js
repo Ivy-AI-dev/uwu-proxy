@@ -478,6 +478,7 @@ function initChat() {
 
   const session = JSON.parse(localStorage.getItem("uwu_session") || "{}");
   const user    = session.user || "anon";
+  let lastTs    = 0;
 
   function addMsg(name, body, ts) {
     const el = document.createElement("div");
@@ -488,19 +489,23 @@ function initChat() {
     msgs.scrollTop = msgs.scrollHeight;
   }
 
-  // SSE stream
-  const es = new EventSource("/api/chat/stream");
-  es.addEventListener("message", e => {
+  async function poll() {
     try {
-      const d = JSON.parse(e.data);
-      if (d.title && d.message) addMsg(d.title, d.message, d.time ? d.time * 1000 : Date.now());
+      const res = await fetch(`/api/chat/messages?since=${lastTs}`);
+      if (!res.ok) return;
+      const { messages } = await res.json();
+      if (messages && messages.length) {
+        messages.forEach(m => addMsg(m.user, m.text, m.ts));
+        lastTs = messages[messages.length - 1].ts;
+      }
     } catch {}
-  });
-  es.onerror = () => {
-    const el = msgs.querySelector("div");
-    if (el) el.textContent = "chat connection lost — refresh to reconnect";
-  };
+  }
+
+  // Load history then poll every 3s
   msgs.innerHTML = "";
+  poll();
+  const pollInterval = setInterval(poll, 3000);
+  window.addEventListener("unload", () => clearInterval(pollInterval));
 
   async function sendMsg() {
     const text = input.value.trim();
@@ -509,9 +514,10 @@ function initChat() {
     try {
       await fetch("/api/chat/send", {
         method: "POST",
-        headers: { "Content-Type": "text/plain", "X-Chat-User": user },
-        body: text,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user, text }),
       });
+      poll();
     } catch (e) { toast("send failed", "error"); }
   }
 
