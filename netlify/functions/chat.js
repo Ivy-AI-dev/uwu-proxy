@@ -1,7 +1,7 @@
 import { getStore } from '@netlify/blobs';
 
 const HDR = { 'Content-Type': 'application/json' };
-const MAX_MESSAGES = 100;
+const MAX_MESSAGES = 10;
 
 function store() {
   return getStore('uwu-chat');
